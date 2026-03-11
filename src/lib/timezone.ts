@@ -111,13 +111,18 @@ export function findOverlappingSlots(
   windowsA: TimeWindow[],
   zoneB: string,
   windowsB: TimeWindow[],
-  refDate: DateTime = DateTime.utc(),
+  refDate: DateTime = DateTime.now(),
   durationMinutes: number = 60
 ): OverlapSlotResult[] {
   const tzA = resolveTimezone(zoneA);
   const tzB = resolveTimezone(zoneB);
+  // Derive the start of the same named calendar day independently
+  // in each participant's timezone. This ensures that an availability
+  // like "00:00–17:00" in New York and "09:00–23:00" in San Francisco
+  // are both interpreted as the same local day, instead of forcing
+  // one side onto the previous day when converted through UTC.
   const dayA = refDate.setZone(tzA).startOf("day");
-  const dayB = dayA.setZone(tzB).startOf("day");
+  const dayB = refDate.setZone(tzB).startOf("day");
 
   const validA = windowsA.filter((w) => validateTimeWindow(w).valid);
   const validB = windowsB.filter((w) => validateTimeWindow(w).valid);

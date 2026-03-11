@@ -1,50 +1,29 @@
 "use client";
 
-import type { PrepNotes } from "@/types";
+import { useState, useCallback } from "react";
+import type { MeetingType, PrepNotes } from "@/types";
 import { Card } from "@/components/ui/Card";
-
-function Section({
-  title,
-  items,
-  single,
-}: {
-  title: string;
-  items?: string[] | string;
-  single?: boolean;
-}) {
-  const content = single
-    ? (typeof items === "string" ? items : items?.[0] ?? "")
-    : items;
-  if (single && typeof content === "string") {
-    if (!content.trim()) return null;
-    return (
-      <div className="mb-5 last:mb-0">
-        <h3 className="text-sm font-semibold text-slate-800 mb-1.5">{title}</h3>
-        <p className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">
-          {content}
-        </p>
-      </div>
-    );
-  }
-  const list = Array.isArray(content) ? content : [];
-  if (list.length === 0) return null;
-  return (
-    <div className="mb-5 last:mb-0">
-      <h3 className="text-sm font-semibold text-slate-800 mb-1.5">{title}</h3>
-      <ul className="list-disc list-inside space-y-1 text-sm text-slate-700 leading-relaxed">
-        {list.map((item, i) => (
-          <li key={i}>{item}</li>
-        ))}
-      </ul>
-    </div>
-  );
-}
+import { Button } from "@/components/ui/Button";
+import { DocumentTextIcon, SparklesIcon, ClipboardIcon } from "@/components/ui/Icons";
+import { MeetingContextForm } from "@/components/prep/MeetingContextForm";
+import { PrepBriefBody } from "@/components/prep/PrepBriefBody";
+import { getPrepNotesAsText } from "@/lib/prepBrief";
 
 interface PrepNotesPanelProps {
   notes: PrepNotes | null;
   loading: boolean;
   error: string | null;
   onRetry?: () => void;
+  /** Form state and handlers for empty state (real form). */
+  meetingType?: MeetingType;
+  context?: string;
+  resume?: string;
+  jobDescription?: string;
+  onMeetingTypeChange?: (v: MeetingType) => void;
+  onContextChange?: (v: string) => void;
+  onResumeChange?: (v: string) => void;
+  onJobDescriptionChange?: (v: string) => void;
+  onGenerate?: () => void;
 }
 
 export function PrepNotesPanel({
@@ -52,16 +31,35 @@ export function PrepNotesPanel({
   loading,
   error,
   onRetry,
+  meetingType = "interview",
+  context = "",
+  resume = "",
+  jobDescription = "",
+  onMeetingTypeChange,
+  onContextChange,
+  onResumeChange,
+  onJobDescriptionChange,
+  onGenerate,
 }: PrepNotesPanelProps) {
+  const [copied, setCopied] = useState(false);
+  const handleCopy = useCallback(() => {
+    if (!notes) return;
+    const text = getPrepNotesAsText(notes);
+    void navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }, [notes]);
+
   if (loading) {
     return (
-      <Card title="Preparation notes">
+      <Card title="Preparation notes" icon={<DocumentTextIcon />}>
         <div className="flex items-center gap-3 py-1">
           <span
             className="inline-block h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-slate-200 border-t-blue-600"
             aria-hidden
           />
-          <p className="text-sm text-slate-600">Generating prep notes…</p>
+          <p className="text-sm text-slate-600">Generating meeting brief…</p>
         </div>
       </Card>
     );
@@ -69,7 +67,7 @@ export function PrepNotesPanel({
 
   if (error) {
     return (
-      <Card title="Preparation notes">
+      <Card title="Preparation notes" icon={<DocumentTextIcon />}>
         <p className="text-sm text-red-600 mb-2 leading-relaxed">{error}</p>
         <p className="text-xs text-slate-500 mb-4">
           Check your connection and that OPENAI_API_KEY is set in .env.local.
@@ -88,30 +86,90 @@ export function PrepNotesPanel({
   }
 
   if (!notes || !hasAnyContent(notes)) {
+    const hasFormHandlers =
+      onMeetingTypeChange &&
+      onContextChange &&
+      onResumeChange &&
+      onJobDescriptionChange &&
+      onGenerate;
     return (
-      <Card title="Preparation notes">
-        <p className="text-sm text-slate-500 mb-2 leading-relaxed">
-          Enter meeting type and optionally meeting goal, resume, or job
-          description, then click &quot;Generate prep notes&quot; to get
-          structured notes.
-        </p>
-        <p className="text-xs text-slate-400 leading-relaxed">
-          Sections include: meeting summary, likely questions, talking points,
-          strengths to highlight, skills to review, and follow-up questions.
-        </p>
+      <Card title="Preparation notes" icon={<DocumentTextIcon />}>
+        <div className="space-y-0">
+          {hasFormHandlers ? (
+            <>
+              <MeetingContextForm
+                meetingType={meetingType}
+                context={context}
+                resume={resume}
+                jobDescription={jobDescription}
+                onMeetingTypeChange={onMeetingTypeChange}
+                onContextChange={onContextChange}
+                onResumeChange={onResumeChange}
+                onJobDescriptionChange={onJobDescriptionChange}
+                noCard
+              />
+              <div className="border-t border-slate-200 pt-4 mt-4">
+                <Button
+                  onClick={onGenerate}
+                  disabled={loading}
+                  className="w-full sm:min-w-[240px] sm:w-auto min-h-[44px] px-6 py-3.5 text-sm font-semibold hover:bg-blue-700 hover:shadow-lg active:bg-blue-800 transition-all inline-flex items-center justify-center gap-2 [&_svg]:text-white"
+                >
+                  <SparklesIcon />
+                  Generate prep notes
+                </Button>
+                <p className="text-xs text-slate-500 mt-4 mb-0">
+                  You&apos;ll get:
+                </p>
+                <ul className="text-xs text-slate-500 mt-1.5 space-y-1 list-none pl-0">
+                  <li>• Meeting overview</li>
+                  <li>• Talking points</li>
+                  <li>• Likely questions</li>
+                  <li>• Strengths to highlight</li>
+                  <li>• Topics to review</li>
+                  <li>• Follow-up questions</li>
+                </ul>
+              </div>
+            </>
+          ) : (
+            <div className="space-y-4">
+              <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50/30 px-4 py-4">
+                <p className="text-sm font-medium text-slate-700 mb-1">
+                  Get structured prep notes
+                </p>
+                <ol className="text-sm text-slate-600 space-y-1 list-decimal list-inside">
+                  <li>Choose meeting type and add context (optional).</li>
+                  <li>Paste resume or job description for interview prep (optional).</li>
+                  <li>Click &quot;Generate prep notes&quot;.</li>
+                </ol>
+              </div>
+              <p className="text-xs text-slate-400">
+                You&apos;ll get: summary, likely questions, talking points, strengths to highlight, skills to review, and follow-up questions.
+              </p>
+            </div>
+          )}
+        </div>
       </Card>
     );
   }
 
+  const copyButton = (
+    <button
+      type="button"
+      onClick={handleCopy}
+      className="inline-flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 transition-colors"
+    >
+      <ClipboardIcon />
+      {copied ? "Copied!" : "Copy notes"}
+    </button>
+  );
+
   return (
-    <Card title="Preparation notes">
-      <Section title="Meeting summary" items={notes.meetingSummary} single />
-      <Section title="Likely questions" items={notes.questionsToPrepare} />
-      <Section title="Talking points" items={notes.talkingPoints} />
-      <Section title="Strengths to highlight" items={notes.strengthsToHighlight} />
-      <Section title="Skills or topics to review" items={notes.skillsToReview} />
-      <Section title="Gaps or missing qualifications" items={notes.gapsOrMissing} />
-      <Section title="Follow-up questions to ask" items={notes.followUpQuestions} />
+    <Card
+      title="AI meeting brief"
+      icon={<DocumentTextIcon />}
+      headerAction={copyButton}
+    >
+      <PrepBriefBody notes={notes} />
     </Card>
   );
 }

@@ -20,7 +20,7 @@ export function DurationSelect({
   error,
 }: DurationSelectProps) {
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-2">
       <label className="block text-sm font-medium text-slate-700">
         Meeting duration
       </label>
@@ -29,8 +29,8 @@ export function DurationSelect({
         onChange={(e) =>
           onChange(Number(e.target.value) as MeetingDurationMinutes)
         }
-        className={`w-full min-h-[40px] rounded-lg border px-3.5 py-2.5 text-sm text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 ${
-          error ? "border-red-500" : "border-slate-300"
+        className={`w-full min-h-[40px] rounded-xl border px-3.5 py-2.5 text-sm text-slate-900 transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/25 ${
+          error ? "border-red-400 focus:border-red-500 focus:ring-red-500/20" : "border-slate-200"
         }`}
         aria-invalid={!!error}
         aria-describedby={error ? "duration-error" : undefined}
@@ -40,7 +40,7 @@ export function DurationSelect({
         <option value={90}>{LABELS[90]}</option>
       </select>
       {error && (
-        <p id="duration-error" className="text-xs text-red-600" role="alert">
+        <p id="duration-error" className="mt-2 text-xs text-red-600" role="alert">
           {error}
         </p>
       )}

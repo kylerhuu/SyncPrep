@@ -56,8 +56,8 @@ export function AvailabilityWindows({
                     type="time"
                     value={w.start}
                     onChange={(e) => update(i, "start", e.target.value)}
-                    className={`min-h-[40px] rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 ${
-                      valid ? "border-slate-300" : "border-red-500"
+                    className={`min-h-[40px] rounded-xl border px-3.5 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/25 ${
+                      valid ? "border-slate-200" : "border-red-400 focus:ring-red-500/20"
                     }`}
                     aria-invalid={!valid}
                   />
@@ -66,8 +66,8 @@ export function AvailabilityWindows({
                     type="time"
                     value={w.end}
                     onChange={(e) => update(i, "end", e.target.value)}
-                    className={`min-h-[40px] rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 ${
-                      valid ? "border-slate-300" : "border-red-500"
+                    className={`min-h-[40px] rounded-xl border px-3.5 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/25 ${
+                      valid ? "border-slate-200" : "border-red-400 focus:ring-red-500/20"
                     }`}
                     aria-invalid={!valid}
                   />

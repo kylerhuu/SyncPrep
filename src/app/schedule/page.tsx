@@ -18,9 +18,7 @@ import { AvailabilityWindows } from "@/components/scheduler/AvailabilityWindows"
 import { DurationSelect } from "@/components/scheduler/DurationSelect";
 import { OverlapResults } from "@/components/scheduler/OverlapResults";
 import { SelectedMeetingCard } from "@/components/scheduler/SelectedMeetingCard";
-import { MeetingContextForm } from "@/components/prep/MeetingContextForm";
 import { PrepNotesPanel } from "@/components/prep/PrepNotesPanel";
-import { Button } from "@/components/ui/Button";
 
 const STORAGE_KEYS = {
   zoneA: "syncprep_zoneA",
@@ -81,8 +79,10 @@ export default function SchedulePage() {
   useEffect(() => {
     setZoneA(loadJson(STORAGE_KEYS.zoneA, ""));
     setZoneB(loadJson(STORAGE_KEYS.zoneB, ""));
-    setWindowsA(loadJson<TimeWindow[]>(STORAGE_KEYS.windowsA, [defaultWindow]));
-    setWindowsB(loadJson<TimeWindow[]>(STORAGE_KEYS.windowsB, [defaultWindow]));
+    const loadedA = loadJson<TimeWindow[]>(STORAGE_KEYS.windowsA, [defaultWindow]);
+    const loadedB = loadJson<TimeWindow[]>(STORAGE_KEYS.windowsB, [defaultWindow]);
+    setWindowsA(Array.isArray(loadedA) && loadedA.length > 0 ? loadedA : [defaultWindow]);
+    setWindowsB(Array.isArray(loadedB) && loadedB.length > 0 ? loadedB : [defaultWindow]);
     const d = loadJson<number>(STORAGE_KEYS.duration, 60);
     setDuration(isValidDuration(d) ? d : 60);
     setMeetingType(
@@ -126,13 +126,13 @@ export default function SchedulePage() {
     selectedSlot,
   ]);
 
-  const refDate = useMemo(() => DateTime.utc().startOf("day"), []);
+  const refDate = useMemo(() => DateTime.now(), []);
 
   const validation = useMemo(() => {
     const zoneAValid = !zoneA.trim() || isValidZone(zoneA);
     const zoneBValid = !zoneB.trim() || isValidZone(zoneB);
-    const allWindowsA = windowsA.every((w) => validateTimeWindow(w).valid);
-    const allWindowsB = windowsB.every((w) => validateTimeWindow(w).valid);
+    const hasValidWindowA = windowsA.some((w) => validateTimeWindow(w).valid);
+    const hasValidWindowB = windowsB.some((w) => validateTimeWindow(w).valid);
     const hasZonesAndWindows =
       zoneA.trim() !== "" &&
       zoneB.trim() !== "" &&
@@ -142,13 +142,13 @@ export default function SchedulePage() {
       hasZonesAndWindows &&
       zoneAValid &&
       zoneBValid &&
-      allWindowsA &&
-      allWindowsB;
+      hasValidWindowA &&
+      hasValidWindowB;
     return {
       zoneAValid,
       zoneBValid,
-      allWindowsA,
-      allWindowsB,
+      allWindowsA: hasValidWindowA,
+      allWindowsB: hasValidWindowB,
       canCompute,
       errorZoneA:
         zoneA.trim() && !zoneAValid
@@ -242,7 +242,7 @@ export default function SchedulePage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[var(--background)]">
-      <header className="border-b border-[var(--border)] bg-white">
+      <header className="border-b border-slate-200 bg-white">
         <div className="max-w-6xl mx-auto px-5 py-4 sm:px-6 flex items-center justify-between">
           <Link
             href="/"
@@ -260,18 +260,27 @@ export default function SchedulePage() {
       </header>
 
       <main className="flex-1 max-w-6xl w-full mx-auto px-5 py-8 sm:px-6">
-        <h1 className="text-2xl font-bold text-slate-900 mb-8 tracking-tight">
-          Schedule & prepare
-        </h1>
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+            Schedule & prepare
+          </h1>
+          <p className="mt-1.5 text-sm text-slate-500 leading-relaxed">
+            Schedule across time zones and generate AI-powered meeting prep in one place.
+          </p>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10">
           <div className="space-y-8">
-            <div className="rounded-xl border border-[var(--border)] bg-white shadow-sm overflow-hidden">
-              <div className="border-b border-[var(--border)] px-5 py-3.5 bg-slate-50/90">
-                <h2 className="text-sm font-semibold tracking-tight text-slate-900">
-                  Time zones & availability
-                </h2>
-              </div>
+            <section aria-label="Find a meeting time">
+              <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-3">
+                Step 1 — Find a meeting time
+              </p>
+              <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+                <div className="border-b border-slate-200/80 px-5 py-4 bg-slate-50/95">
+                  <h2 className="text-sm font-semibold tracking-tight text-slate-800">
+                    Time zones & availability
+                  </h2>
+                </div>
               <div className="p-5 space-y-6">
                 <TimezoneFields
                   zoneA={zoneA}
@@ -296,57 +305,58 @@ export default function SchedulePage() {
                   label="Other person's availability (their local time)"
                 />
               </div>
-            </div>
-
-            <MeetingContextForm
-              meetingType={meetingType}
-              context={context}
-              resume={resume}
-              jobDescription={jobDescription}
-              onMeetingTypeChange={setMeetingType}
-              onContextChange={setContext}
-              onResumeChange={setResume}
-              onJobDescriptionChange={setJobDescription}
-            />
-
-            <div className="flex justify-end pt-1">
-              <Button
-                onClick={generatePrep}
-                disabled={prepLoading}
-              >
-                {prepLoading ? "Generating…" : "Generate prep notes"}
-              </Button>
-            </div>
+              </div>
+            </section>
           </div>
 
-          <div className="space-y-6 lg:min-w-0">
-            <OverlapResults
-              allSlots={allSlots}
-              suggestedSlots={suggestedSlots}
-              selectedSlot={selectedSlot}
-              onSelectSlot={setSelectedSlot}
-              hasValidInputNoOverlap={hasValidInputNoOverlap}
-              showInputPrompt={showInputPrompt}
-            />
-            {selectedSlot ? (
-              <SelectedMeetingCard
-                slot={selectedSlot}
+          <div className="space-y-7 lg:min-w-0">
+            <section className="space-y-1" aria-label="Available times">
+              <OverlapResults
+                allSlots={allSlots}
+                suggestedSlots={suggestedSlots}
+                selectedSlot={selectedSlot}
+                onSelectSlot={setSelectedSlot}
                 zoneA={zoneA}
                 zoneB={zoneB}
-                title="Meeting"
+                hasValidInputNoOverlap={hasValidInputNoOverlap}
+                showInputPrompt={showInputPrompt}
               />
-            ) : allSlots.length > 0 ? (
-              <p className="text-sm text-slate-500 text-center py-4 rounded-xl border border-dashed border-slate-200 bg-slate-50/50">
-                Select a time above to see your meeting summary and add to
-                calendar.
+            </section>
+            <section className="space-y-1" aria-label="Selected meeting">
+              {selectedSlot ? (
+                <SelectedMeetingCard
+                  slot={selectedSlot}
+                  zoneA={zoneA}
+                  zoneB={zoneB}
+                  title="Meeting"
+                />
+              ) : allSlots.length > 0 ? (
+                <p className="text-sm text-slate-500 text-center py-5 rounded-2xl border border-dashed border-slate-200 bg-slate-50/50">
+                  Select a time above to see your meeting summary and add to
+                  calendar.
+                </p>
+              ) : null}
+            </section>
+            <section className="space-y-1" aria-label="Preparation notes">
+              <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-3">
+                Step 2 — Generate prep notes
               </p>
-            ) : null}
-            <PrepNotesPanel
-              notes={prepNotes}
-              loading={prepLoading}
-              error={prepError}
-              onRetry={generatePrep}
-            />
+              <PrepNotesPanel
+                notes={prepNotes}
+                loading={prepLoading}
+                error={prepError}
+                onRetry={generatePrep}
+                meetingType={meetingType}
+                context={context}
+                resume={resume}
+                jobDescription={jobDescription}
+                onMeetingTypeChange={setMeetingType}
+                onContextChange={setContext}
+                onResumeChange={setResume}
+                onJobDescriptionChange={setJobDescription}
+                onGenerate={generatePrep}
+              />
+            </section>
             {prepNotes && (
               <p className="text-sm text-slate-600">
                 <Link
