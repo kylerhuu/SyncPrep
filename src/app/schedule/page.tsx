@@ -4,27 +4,33 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { DateTime } from "luxon";
 import {
-  findOverlappingSlots,
+  findOverlappingSlotsFromRanges,
   getBestSuggestions,
   isValidZone,
+  resolveTimezone,
   validateTimeWindow,
+  windowsToUtcRanges,
+  workingHoursMinusBusy,
   MEETING_DURATIONS,
   type MeetingDurationMinutes,
   type OverlapSlotResult,
 } from "@/lib/timezone";
 import type { MeetingType, PrepNotes, TimeWindow } from "@/types";
+import type { CalendarEventItem } from "@/types/calendar";
 import { TimezoneFields } from "@/components/scheduler/TimezoneFields";
-import { AvailabilityWindows } from "@/components/scheduler/AvailabilityWindows";
+import { WorkingHoursInput } from "@/components/scheduler/WorkingHoursInput";
 import { DurationSelect } from "@/components/scheduler/DurationSelect";
 import { OverlapResults } from "@/components/scheduler/OverlapResults";
 import { SelectedMeetingCard } from "@/components/scheduler/SelectedMeetingCard";
 import { PrepNotesPanel } from "@/components/prep/PrepNotesPanel";
+import { GoogleCalendarSection } from "@/components/calendar/GoogleCalendarSection";
+import { WeeklyScheduleSection } from "@/components/calendar/WeeklyScheduleSection";
 
 const STORAGE_KEYS = {
   zoneA: "syncprep_zoneA",
   zoneB: "syncprep_zoneB",
-  windowsA: "syncprep_windowsA",
-  windowsB: "syncprep_windowsB",
+  workingHoursA: "syncprep_workingHoursA",
+  workingHoursB: "syncprep_workingHoursB",
   duration: "syncprep_duration",
   meetingType: "syncprep_meetingType",
   context: "syncprep_context",
@@ -62,8 +68,10 @@ function isValidDuration(n: number): n is MeetingDurationMinutes {
 export default function SchedulePage() {
   const [zoneA, setZoneA] = useState("");
   const [zoneB, setZoneB] = useState("");
-  const [windowsA, setWindowsA] = useState<TimeWindow[]>([]);
-  const [windowsB, setWindowsB] = useState<TimeWindow[]>([]);
+  const [workingHoursA, setWorkingHoursA] = useState<TimeWindow>(defaultWindow);
+  const [workingHoursB, setWorkingHoursB] = useState<TimeWindow>(defaultWindow);
+  const [calendarConnected, setCalendarConnected] = useState(false);
+  const [calendarEvents, setCalendarEvents] = useState<CalendarEventItem[]>([]);
   const [duration, setDuration] = useState<MeetingDurationMinutes>(60);
   const [selectedSlot, setSelectedSlot] = useState<OverlapSlotResult | null>(
     null
@@ -79,10 +87,18 @@ export default function SchedulePage() {
   useEffect(() => {
     setZoneA(loadJson(STORAGE_KEYS.zoneA, ""));
     setZoneB(loadJson(STORAGE_KEYS.zoneB, ""));
-    const loadedA = loadJson<TimeWindow[]>(STORAGE_KEYS.windowsA, [defaultWindow]);
-    const loadedB = loadJson<TimeWindow[]>(STORAGE_KEYS.windowsB, [defaultWindow]);
-    setWindowsA(Array.isArray(loadedA) && loadedA.length > 0 ? loadedA : [defaultWindow]);
-    setWindowsB(Array.isArray(loadedB) && loadedB.length > 0 ? loadedB : [defaultWindow]);
+    const loadedA = loadJson<TimeWindow>(STORAGE_KEYS.workingHoursA, defaultWindow);
+    const loadedB = loadJson<TimeWindow>(STORAGE_KEYS.workingHoursB, defaultWindow);
+    setWorkingHoursA(
+      loadedA && typeof loadedA === "object" && "start" in loadedA && "end" in loadedA
+        ? loadedA
+        : defaultWindow
+    );
+    setWorkingHoursB(
+      loadedB && typeof loadedB === "object" && "start" in loadedB && "end" in loadedB
+        ? loadedB
+        : defaultWindow
+    );
     const d = loadJson<number>(STORAGE_KEYS.duration, 60);
     setDuration(isValidDuration(d) ? d : 60);
     setMeetingType(
@@ -102,11 +118,16 @@ export default function SchedulePage() {
     }
   }, []);
 
+  const onCalendarChange = useCallback((connected: boolean, events: CalendarEventItem[]) => {
+    setCalendarConnected(connected);
+    setCalendarEvents(events);
+  }, []);
+
   useEffect(() => {
     saveJson(STORAGE_KEYS.zoneA, zoneA);
     saveJson(STORAGE_KEYS.zoneB, zoneB);
-    saveJson(STORAGE_KEYS.windowsA, windowsA);
-    saveJson(STORAGE_KEYS.windowsB, windowsB);
+    saveJson(STORAGE_KEYS.workingHoursA, workingHoursA);
+    saveJson(STORAGE_KEYS.workingHoursB, workingHoursB);
     saveJson(STORAGE_KEYS.duration, duration);
     saveJson(STORAGE_KEYS.meetingType, meetingType);
     saveJson(STORAGE_KEYS.context, context);
@@ -116,8 +137,8 @@ export default function SchedulePage() {
   }, [
     zoneA,
     zoneB,
-    windowsA,
-    windowsB,
+    workingHoursA,
+    workingHoursB,
     duration,
     meetingType,
     context,
@@ -131,24 +152,20 @@ export default function SchedulePage() {
   const validation = useMemo(() => {
     const zoneAValid = !zoneA.trim() || isValidZone(zoneA);
     const zoneBValid = !zoneB.trim() || isValidZone(zoneB);
-    const hasValidWindowA = windowsA.some((w) => validateTimeWindow(w).valid);
-    const hasValidWindowB = windowsB.some((w) => validateTimeWindow(w).valid);
-    const hasZonesAndWindows =
-      zoneA.trim() !== "" &&
-      zoneB.trim() !== "" &&
-      windowsA.length > 0 &&
-      windowsB.length > 0;
+    const validWorkingHoursA = validateTimeWindow(workingHoursA).valid;
+    const validWorkingHoursB = validateTimeWindow(workingHoursB).valid;
+    const hasZones = zoneA.trim() !== "" && zoneB.trim() !== "";
     const canCompute: boolean =
-      hasZonesAndWindows &&
+      hasZones &&
       zoneAValid &&
       zoneBValid &&
-      hasValidWindowA &&
-      hasValidWindowB;
+      validWorkingHoursA &&
+      validWorkingHoursB;
     return {
       zoneAValid,
       zoneBValid,
-      allWindowsA: hasValidWindowA,
-      allWindowsB: hasValidWindowB,
+      validWorkingHoursA,
+      validWorkingHoursB,
       canCompute,
       errorZoneA:
         zoneA.trim() && !zoneAValid
@@ -159,28 +176,70 @@ export default function SchedulePage() {
           ? "Unknown time zone or city. Try e.g. London or Europe/London"
           : undefined,
     };
-  }, [zoneA, zoneB, windowsA, windowsB]);
+  }, [zoneA, zoneB, workingHoursA, workingHoursB]);
 
   const allSlots = useMemo(() => {
     if (!validation.canCompute) return [];
-    return findOverlappingSlots(
+    const rangesB = windowsToUtcRanges(zoneB, [workingHoursB], refDate);
+    let rangesA: { startISO: string; endISO: string }[];
+    if (calendarConnected) {
+      rangesA = workingHoursMinusBusy(
+        zoneA,
+        [workingHoursA],
+        calendarEvents.map((e) => ({ start: e.start, end: e.end })),
+        refDate
+      );
+    } else {
+      rangesA = windowsToUtcRanges(zoneA, [workingHoursA], refDate);
+    }
+    return findOverlappingSlotsFromRanges(
+      rangesA,
+      rangesB,
       zoneA,
-      windowsA,
       zoneB,
-      windowsB,
-      refDate,
       duration
     );
   }, [
     validation.canCompute,
     zoneA,
     zoneB,
-    windowsA,
-    windowsB,
+    workingHoursA,
+    workingHoursB,
+    calendarConnected,
+    calendarEvents,
     refDate,
     duration,
   ]);
   const suggestedSlots = useMemo(() => getBestSuggestions(allSlots), [allSlots]);
+
+  /** Today's availability in user's timezone (for calendar section). */
+  const derivedAvailabilityToday = useMemo(() => {
+    if (!zoneA.trim() || !validation.validWorkingHoursA) return [];
+    let ranges: { startISO: string; endISO: string }[];
+    if (calendarConnected) {
+      ranges = workingHoursMinusBusy(
+        zoneA,
+        [workingHoursA],
+        calendarEvents.map((e) => ({ start: e.start, end: e.end })),
+        refDate
+      );
+    } else {
+      ranges = windowsToUtcRanges(zoneA, [workingHoursA], refDate);
+    }
+    const tz = resolveTimezone(zoneA);
+    return ranges.map((r) => {
+      const start = DateTime.fromISO(r.startISO, { setZone: true }).setZone(tz);
+      const end = DateTime.fromISO(r.endISO, { setZone: true }).setZone(tz);
+      return `${start.toFormat("h:mm a")} – ${end.toFormat("h:mm a")}`;
+    });
+  }, [
+    zoneA,
+    validation.validWorkingHoursA,
+    workingHoursA,
+    calendarConnected,
+    calendarEvents,
+    refDate,
+  ]);
 
   // Clear selection when we have computed slots and the selected slot is not in the list
   // (e.g. user changed duration/zones/windows, or slot was from a previous day)
@@ -271,6 +330,13 @@ export default function SchedulePage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10">
           <div className="space-y-8">
+            <WeeklyScheduleSection
+              userTimeZone={zoneA}
+              workingHours={workingHoursA}
+              events={calendarEvents}
+              connected={calendarConnected}
+              selectedSlot={selectedSlot}
+            />
             <section aria-label="Find a meeting time">
               <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-3">
                 Step 1 — Find a meeting time
@@ -294,19 +360,29 @@ export default function SchedulePage() {
                   value={duration}
                   onChange={setDuration}
                 />
-                <AvailabilityWindows
-                  windows={windowsA}
-                  onChange={setWindowsA}
-                  label="Your availability (local time)"
+                <WorkingHoursInput
+                  value={workingHoursA}
+                  onChange={setWorkingHoursA}
+                  label="Your working hours"
+                  helperText={
+                    calendarConnected
+                      ? "Calendar events are excluded automatically."
+                      : undefined
+                  }
                 />
-                <AvailabilityWindows
-                  windows={windowsB}
-                  onChange={setWindowsB}
-                  label="Other person's availability (their local time)"
+                <WorkingHoursInput
+                  value={workingHoursB}
+                  onChange={setWorkingHoursB}
+                  label="Other person's working hours"
                 />
               </div>
               </div>
             </section>
+            <GoogleCalendarSection
+              userTimeZone={zoneA}
+              onCalendarChange={onCalendarChange}
+              derivedAvailabilityToday={derivedAvailabilityToday}
+            />
           </div>
 
           <div className="space-y-7 lg:min-w-0">

@@ -5,6 +5,12 @@ export interface TimeWindow {
   end: string;
 }
 
+/** UTC availability range (ISO start/end). Used for overlap math. */
+export interface AvailabilityRange {
+  startISO: string;
+  endISO: string;
+}
+
 /** @deprecated Use OverlapSlotResult from @/lib/timezone for slot types. */
 export interface OverlapSlot {
   start: string;

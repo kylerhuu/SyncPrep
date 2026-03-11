@@ -12,7 +12,7 @@
  */
 
 import { DateTime } from "luxon";
-import type { TimeWindow } from "@/types";
+import type { TimeWindow, AvailabilityRange } from "@/types";
 
 /** Common city/region names → IANA time zone. User can also type IANA directly (e.g. America/New_York). */
 const CITY_TO_TZ: Record<string, string> = {
@@ -94,6 +94,93 @@ function windowToUTC(
   return { start: start.toUTC(), end: end.toUTC() };
 }
 
+/**
+ * Convert time-of-day windows (in zone) for a reference day into UTC availability ranges.
+ */
+export function windowsToUtcRanges(
+  zone: string,
+  windows: TimeWindow[],
+  refDate: DateTime
+): AvailabilityRange[] {
+  const tz = resolveTimezone(zone);
+  const dayStart = refDate.setZone(tz).startOf("day");
+  const valid = windows.filter((w) => validateTimeWindow(w).valid);
+  const ranges: AvailabilityRange[] = [];
+  for (const w of valid) {
+    const { start, end } = windowToUTC(w, tz, dayStart);
+    ranges.push({ startISO: start.toISO()!, endISO: end.toISO()! });
+  }
+  return ranges;
+}
+
+/** Busy event with ISO start/end (e.g. from Google Calendar). */
+export interface BusyBlock {
+  start: string;
+  end: string;
+}
+
+/**
+ * Compute availability = working hours minus busy blocks (imported calendar events).
+ *
+ * Algorithm:
+ * 1. Convert working hours (local time-of-day in zone) to UTC ranges for refDate.
+ * 2. Filter busy blocks to those overlapping the ref day (UTC day bounds).
+ * 3. For each working-hour block: treat it as a segment [start, end]. For each
+ *    busy block that overlaps the segment, clip busy to the segment (so we only
+ *    subtract time inside the working window). Emit a free gap [segmentStart, busyStart]
+ *    when segmentStart < busyStart; then set segmentStart = busyEnd and continue.
+ * 4. After processing all busy, emit the final gap [segmentStart, segmentEnd] if non-empty.
+ * 5. Return all gaps as AvailabilityRange[] (UTC).
+ */
+export function workingHoursMinusBusy(
+  zone: string,
+  workingHours: TimeWindow[],
+  busyBlocks: BusyBlock[],
+  refDate: DateTime
+): AvailabilityRange[] {
+  const tz = resolveTimezone(zone);
+  const dayStart = refDate.setZone(tz).startOf("day");
+  const dayEndUtc = dayStart.plus({ days: 1 }).toUTC();
+  const dayStartUtc = dayStart.toUTC();
+
+  const workingRanges = windowsToUtcRanges(zone, workingHours, refDate);
+  if (workingRanges.length === 0) return [];
+
+  const busyInDay = busyBlocks
+    .map((b) => ({
+      start: DateTime.fromISO(b.start, { setZone: true }).toUTC(),
+      end: DateTime.fromISO(b.end, { setZone: true }).toUTC(),
+    }))
+    .filter((b) => b.end > dayStartUtc && b.start < dayEndUtc)
+    .sort((a, b) => a.start.valueOf() - b.start.valueOf());
+
+  const gaps: AvailabilityRange[] = [];
+  for (const block of workingRanges) {
+    let segmentStart = DateTime.fromISO(block.startISO, { setZone: true });
+    const segmentEnd = DateTime.fromISO(block.endISO, { setZone: true });
+    for (const busy of busyInDay) {
+      if (busy.end <= segmentStart || busy.start >= segmentEnd) continue;
+      const busyStart = DateTime.max(busy.start, segmentStart);
+      const busyEnd = DateTime.min(busy.end, segmentEnd);
+      if (segmentStart < busyStart) {
+        gaps.push({
+          startISO: segmentStart.toISO()!,
+          endISO: busyStart.toISO()!,
+        });
+      }
+      segmentStart = busyEnd;
+      if (segmentStart >= segmentEnd) break;
+    }
+    if (segmentStart < segmentEnd) {
+      gaps.push({
+        startISO: segmentStart.toISO()!,
+        endISO: segmentEnd.toISO()!,
+      });
+    }
+  }
+  return gaps.sort((a, b) => a.startISO.localeCompare(b.startISO));
+}
+
 export interface OverlapSlotResult {
   start: string;
   end: string;
@@ -103,39 +190,33 @@ export interface OverlapSlotResult {
 }
 
 /**
- * Find all overlapping meeting slots for one reference day.
- * @param durationMinutes — 30, 60, or 90
+ * Find overlapping meeting slots from two lists of UTC availability ranges.
+ *
+ * Overlap flow (used by schedule page):
+ * 1. User (A): rangesA = working hours minus imported calendar busy (or plain working hours if no calendar).
+ * 2. Other (B): rangesB = working hours converted to UTC for ref day.
+ * 3. For each pair (rangeA, rangeB), overlap = [max(startA, startB), min(endA, endB)]; step by duration to emit slots.
+ * 4. Dedupe by startISO, sort chronologically; suggestions = top N.
  */
-export function findOverlappingSlots(
+export function findOverlappingSlotsFromRanges(
+  rangesA: AvailabilityRange[],
+  rangesB: AvailabilityRange[],
   zoneA: string,
-  windowsA: TimeWindow[],
   zoneB: string,
-  windowsB: TimeWindow[],
-  refDate: DateTime = DateTime.now(),
   durationMinutes: number = 60
 ): OverlapSlotResult[] {
   const tzA = resolveTimezone(zoneA);
-  const tzB = resolveTimezone(zoneB);
-  // Derive the start of the same named calendar day independently
-  // in each participant's timezone. This ensures that an availability
-  // like "00:00–17:00" in New York and "09:00–23:00" in San Francisco
-  // are both interpreted as the same local day, instead of forcing
-  // one side onto the previous day when converted through UTC.
-  const dayA = refDate.setZone(tzA).startOf("day");
-  const dayB = refDate.setZone(tzB).startOf("day");
-
-  const validA = windowsA.filter((w) => validateTimeWindow(w).valid);
-  const validB = windowsB.filter((w) => validateTimeWindow(w).valid);
-  const rangesA = validA.map((w) => windowToUTC(w, tzA, dayA));
-  const rangesB = validB.map((w) => windowToUTC(w, tzB, dayB));
-
   const slots: OverlapSlotResult[] = [];
   const duration = { minutes: durationMinutes };
 
   for (const ra of rangesA) {
+    const startA = DateTime.fromISO(ra.startISO, { setZone: true });
+    const endA = DateTime.fromISO(ra.endISO, { setZone: true });
     for (const rb of rangesB) {
-      const start = DateTime.max(ra.start, rb.start);
-      const end = DateTime.min(ra.end, rb.end);
+      const startB = DateTime.fromISO(rb.startISO, { setZone: true });
+      const endB = DateTime.fromISO(rb.endISO, { setZone: true });
+      const start = DateTime.max(startA, startB);
+      const end = DateTime.min(endA, endB);
       if (start >= end) continue;
       let cursor = start;
       while (cursor.plus(duration).valueOf() <= end.valueOf()) {
@@ -162,6 +243,29 @@ export function findOverlappingSlots(
   });
   unique.sort((a, b) => a.startISO.localeCompare(b.startISO));
   return unique;
+}
+
+/**
+ * Find all overlapping meeting slots for one reference day (from time-of-day windows).
+ * Delegates to windowsToUtcRanges + findOverlappingSlotsFromRanges.
+ */
+export function findOverlappingSlots(
+  zoneA: string,
+  windowsA: TimeWindow[],
+  zoneB: string,
+  windowsB: TimeWindow[],
+  refDate: DateTime = DateTime.now(),
+  durationMinutes: number = 60
+): OverlapSlotResult[] {
+  const rangesA = windowsToUtcRanges(zoneA, windowsA, refDate);
+  const rangesB = windowsToUtcRanges(zoneB, windowsB, refDate);
+  return findOverlappingSlotsFromRanges(
+    rangesA,
+    rangesB,
+    zoneA,
+    zoneB,
+    durationMinutes
+  );
 }
 
 export function getBestSuggestions(
