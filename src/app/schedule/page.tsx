@@ -25,6 +25,8 @@ import { SelectedMeetingCard } from "@/components/scheduler/SelectedMeetingCard"
 import { PrepNotesPanel } from "@/components/prep/PrepNotesPanel";
 import { GoogleCalendarSection } from "@/components/calendar/GoogleCalendarSection";
 import { WeeklyScheduleSection } from "@/components/calendar/WeeklyScheduleSection";
+import { AppNav } from "@/components/nav/AppNav";
+import { AppFooter } from "@/components/nav/AppFooter";
 
 const STORAGE_KEYS = {
   zoneA: "syncprep_zoneA",
@@ -169,11 +171,11 @@ export default function SchedulePage() {
       canCompute,
       errorZoneA:
         zoneA.trim() && !zoneAValid
-          ? "Unknown time zone or city. Try e.g. New York or America/New_York"
+          ? "Time zone not found. Try e.g. New York or America/New_York"
           : undefined,
       errorZoneB:
         zoneB.trim() && !zoneBValid
-          ? "Unknown time zone or city. Try e.g. London or Europe/London"
+          ? "Time zone not found. Try e.g. London or Europe/London"
           : undefined,
     };
   }, [zoneA, zoneB, workingHoursA, workingHoursB]);
@@ -275,12 +277,12 @@ export default function SchedulePage() {
       try {
         data = await res.json();
       } catch {
-        setPrepError("Invalid response from server. Please try again.");
+        setPrepError("Something went wrong. Please try again.");
         return;
       }
       if (!res.ok) {
         setPrepError(
-          typeof data?.error === "string" ? data.error : "Failed to generate prep notes"
+          typeof data?.error === "string" ? data.error : "We couldn't generate your meeting brief. Please try again."
         );
         return;
       }
@@ -292,7 +294,7 @@ export default function SchedulePage() {
       }
     } catch (e) {
       setPrepError(
-        e instanceof Error ? e.message : "Request failed"
+        e instanceof Error && e.message ? e.message : "Connection error. Please check your internet and try again."
       );
     } finally {
       setPrepLoading(false);
@@ -301,22 +303,7 @@ export default function SchedulePage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[var(--background)]">
-      <header className="border-b border-slate-200 bg-white">
-        <div className="max-w-6xl mx-auto px-5 py-4 sm:px-6 flex items-center justify-between">
-          <Link
-            href="/"
-            className="text-lg font-semibold tracking-tight text-slate-900 hover:text-slate-700"
-          >
-            SyncPrep
-          </Link>
-          <Link
-            href="/"
-            className="text-sm font-medium text-slate-600 hover:text-slate-900"
-          >
-            Home
-          </Link>
-        </div>
-      </header>
+      <AppNav />
 
       <main className="flex-1 max-w-6xl w-full mx-auto px-5 py-8 sm:px-6">
         <div className="mb-8">
@@ -324,7 +311,7 @@ export default function SchedulePage() {
             Schedule & prepare
           </h1>
           <p className="mt-1.5 text-sm text-slate-500 leading-relaxed">
-            Schedule across time zones and generate AI-powered meeting prep in one place.
+            Schedule across time zones and prepare better meetings.
           </p>
         </div>
 
@@ -366,7 +353,7 @@ export default function SchedulePage() {
                   label="Your working hours"
                   helperText={
                     calendarConnected
-                      ? "Calendar events are excluded automatically."
+                      ? "Availability is calculated from your calendar and working hours."
                       : undefined
                   }
                 />
@@ -408,14 +395,13 @@ export default function SchedulePage() {
                 />
               ) : allSlots.length > 0 ? (
                 <p className="text-sm text-slate-500 text-center py-5 rounded-2xl border border-dashed border-slate-200 bg-slate-50/50">
-                  Select a time above to see your meeting summary and add to
-                  calendar.
+                  Select a time to see your meeting summary and add to calendar.
                 </p>
               ) : null}
             </section>
             <section className="space-y-1" aria-label="Preparation notes">
               <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-3">
-                Step 2 — Generate prep notes
+                Step 2 — Generate meeting brief
               </p>
               <PrepNotesPanel
                 notes={prepNotes}
@@ -439,13 +425,14 @@ export default function SchedulePage() {
                   href="/prep"
                   className="font-medium text-blue-600 hover:text-blue-700 hover:underline"
                 >
-                  View prep results page →
+                  View full brief →
                 </Link>
               </p>
             )}
           </div>
         </div>
       </main>
+      <AppFooter />
     </div>
   );
 }

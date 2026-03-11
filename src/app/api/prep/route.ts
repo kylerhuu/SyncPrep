@@ -58,8 +58,8 @@ export async function POST(request: Request) {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
     return NextResponse.json(
-      { error: "OPENAI_API_KEY not set. Add it to .env.local." },
-      { status: 500 }
+      { error: "Meeting brief is not configured. Please contact support." },
+      { status: 503 }
     );
   }
 
@@ -77,8 +77,8 @@ export async function POST(request: Request) {
     const raw = completion.choices[0]?.message?.content;
     if (!raw) {
       return NextResponse.json(
-        { error: "Empty response from OpenAI" },
-        { status: 500 }
+        { error: "The service returned an empty response. Please try again." },
+        { status: 502 }
       );
     }
     let parsed: Record<string, unknown>;
@@ -86,8 +86,8 @@ export async function POST(request: Request) {
       parsed = JSON.parse(raw) as Record<string, unknown>;
     } catch {
       return NextResponse.json(
-        { error: "Invalid JSON from AI; please try again." },
-        { status: 500 }
+        { error: "Something went wrong generating your brief. Please try again." },
+        { status: 502 }
       );
     }
     const notes: PrepNotes = {
@@ -105,7 +105,10 @@ export async function POST(request: Request) {
     return NextResponse.json(notes);
   } catch (err) {
     console.error("OpenAI prep error:", err);
-    const message = err instanceof Error ? err.message : "OpenAI request failed";
-    return NextResponse.json({ error: message }, { status: 500 });
+    const isRateLimit = err instanceof Error && /rate limit|429/i.test(err.message);
+    const message = isRateLimit
+      ? "Too many requests. Please wait a moment and try again."
+      : "We couldn't generate your meeting brief. Please try again.";
+    return NextResponse.json({ error: message }, { status: 502 });
   }
 }

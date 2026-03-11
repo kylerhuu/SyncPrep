@@ -57,16 +57,16 @@ export function isValidZone(zoneOrCity: string): boolean {
 export function validateTimeWindow(w: TimeWindow): { valid: boolean; error?: string } {
   const start = w.start?.trim() ?? "";
   const end = w.end?.trim() ?? "";
-  if (!start || !end) return { valid: false, error: "Start and end time required" };
+  if (!start || !end) return { valid: false, error: "Start and end time are required" };
   const [sh, sm] = start.split(":").map(Number);
   const [eh, em] = end.split(":").map(Number);
   if (Number.isNaN(sh) || Number.isNaN(sm) || Number.isNaN(eh) || Number.isNaN(em)) {
-    return { valid: false, error: "Use HH:mm format" };
+    return { valid: false, error: "Enter time as HH:mm (e.g. 09:00)" };
   }
   const startMins = sh * 60 + sm;
   const endMins = eh * 60 + em;
   if (endMins <= startMins) {
-    return { valid: false, error: "End time must be after start time" };
+    return { valid: false, error: "End time must be after start time." };
   }
   return { valid: true };
 }

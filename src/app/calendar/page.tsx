@@ -8,6 +8,9 @@ import { workingHoursMinusBusy, resolveTimezone } from "@/lib/timezone";
 import type { TimeWindow } from "@/types";
 import type { CalendarEventItem } from "@/types/calendar";
 import type { OverlapSlotResult } from "@/lib/timezone";
+import { AppNav } from "@/components/nav/AppNav";
+import { AppFooter } from "@/components/nav/AppFooter";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 
 const STORAGE_KEYS = {
   zoneA: "syncprep_zoneA",
@@ -181,20 +184,10 @@ export default function CalendarPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col bg-[var(--background)]">
-        <header className="border-b border-slate-200 bg-white">
-          <div className="max-w-5xl mx-auto px-5 py-4 flex items-center justify-between">
-            <Link href="/schedule" className="text-lg font-semibold text-slate-900">
-              SyncPrep
-            </Link>
-            <Link href="/schedule" className="text-sm text-slate-600 hover:text-slate-900">
-              ← Schedule
-            </Link>
-          </div>
-        </header>
+        <AppNav />
         <main className="flex-1 max-w-5xl w-full mx-auto px-5 py-8">
-          <div className="flex items-center gap-3 py-8">
-            <span className="h-5 w-5 animate-spin rounded-full border-2 border-slate-200 border-t-blue-600" aria-hidden />
-            <p className="text-sm text-slate-500">Loading calendar…</p>
+          <div className="py-12">
+            <LoadingSpinner label="Loading calendar…" size="md" />
           </div>
         </main>
       </div>
@@ -203,16 +196,7 @@ export default function CalendarPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[var(--background)]">
-      <header className="border-b border-slate-200 bg-white">
-        <div className="max-w-5xl mx-auto px-5 py-4 flex items-center justify-between">
-          <Link href="/schedule" className="text-lg font-semibold text-slate-900">
-            SyncPrep
-          </Link>
-          <Link href="/schedule" className="text-sm text-slate-600 hover:text-slate-900">
-            ← Schedule
-          </Link>
-        </div>
-      </header>
+      <AppNav />
 
       <main className="flex-1 max-w-5xl w-full mx-auto px-5 py-8">
         <div className="mb-8">
@@ -220,14 +204,14 @@ export default function CalendarPage() {
             Weekly schedule
           </h1>
           <p className="mt-2 text-sm text-slate-500">
-            Your week at a glance. Busy blocks from your calendar; gaps are available.
+            Your week at a glance—busy blocks and open gaps.
           </p>
         </div>
 
         {!connected ? (
           <div className="rounded-xl border border-slate-200 bg-slate-50/50 px-5 py-8 text-center">
             <p className="text-sm text-slate-600 mb-4">
-              Connect your Google Calendar on the Schedule page to see events and availability here.
+              Connect Google Calendar on the Schedule page to see your week here.
             </p>
             <Link
               href="/schedule"
@@ -239,7 +223,7 @@ export default function CalendarPage() {
         ) : !zone.trim() ? (
           <div className="rounded-2xl border border-slate-200 bg-slate-50/50 px-5 py-8 text-center">
             <p className="text-sm text-slate-600">
-              Set your time zone on the Schedule page to see your week.
+              Set your time zone on Schedule to see your week.
             </p>
           </div>
         ) : (
@@ -270,6 +254,7 @@ export default function CalendarPage() {
           </>
         )}
       </main>
+      <AppFooter />
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { DateTime } from "luxon";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { CalendarIcon } from "@/components/ui/Icons";
 import type { CalendarEventItem } from "@/types/calendar";
 import { resolveTimezone } from "@/lib/timezone";
@@ -11,6 +12,7 @@ import { resolveTimezone } from "@/lib/timezone";
 interface EventsResponse {
   connected: boolean;
   events: CalendarEventItem[];
+  error?: string;
 }
 
 function formatEventTime(startISO: string, endISO: string, ianaZone: string): string {
@@ -42,18 +44,28 @@ export function GoogleCalendarSection({
 }) {
   const [data, setData] = useState<EventsResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [disconnecting, setDisconnecting] = useState(false);
 
   const fetchEvents = useCallback(async () => {
     setLoading(true);
+    setFetchError(null);
     try {
       const res = await fetch("/api/calendar/events", { credentials: "include" });
       const json = (await res.json()) as EventsResponse | { error?: string };
-      if (!res.ok) throw new Error((json as { error?: string }).error ?? "Failed to load");
+      if (!res.ok) {
+        const msg = (json as { error?: string }).error ?? "Couldn't load calendar";
+        setFetchError(msg);
+        setData({ connected: false, events: [] });
+        onCalendarChange?.(false, []);
+        return;
+      }
       const result = json as EventsResponse;
       setData(result);
+      setFetchError(null);
       onCalendarChange?.(result.connected, result.events ?? []);
-    } catch (e) {
+    } catch {
+      setFetchError("Couldn't connect. Please try again.");
       setData({ connected: false, events: [] });
       onCalendarChange?.(false, []);
     } finally {
@@ -88,9 +100,8 @@ export function GoogleCalendarSection({
   if (loading) {
     return (
       <Card title="Your calendar" icon={<CalendarIcon />}>
-        <div className="flex items-center gap-3 py-2">
-          <span className="inline-block h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-slate-200 border-t-blue-600" aria-hidden />
-          <p className="text-sm text-slate-500">Loading…</p>
+        <div className="py-4">
+          <LoadingSpinner label="Loading calendar…" />
         </div>
       </Card>
     );
@@ -99,12 +110,37 @@ export function GoogleCalendarSection({
   if (!data?.connected) {
     return (
       <Card title="Your calendar" icon={<CalendarIcon />}>
-        <p className="text-sm text-slate-600 mb-4">
-          Connect your Google Calendar to see upcoming events alongside your availability.
+        {fetchError && (
+          <p className="text-sm text-amber-700 mb-4">{fetchError}</p>
+        )}
+        <p className="text-sm text-slate-600 mb-3">
+          Connect your calendar to see your events and calculate availability
+          for meeting scheduling.
         </p>
-        <Button onClick={handleConnect} className="w-full sm:w-auto">
-          Connect Google Calendar
-        </Button>
+        <p className="text-xs text-slate-500 mb-4">
+          Read-only access. SyncPrep does not edit your calendar. Used only to
+          show busy times and find open slots.{" "}
+          <a
+            href="/privacy"
+            className="text-slate-600 hover:text-slate-800 underline"
+          >
+            Privacy
+          </a>
+        </p>
+        <div className="flex flex-wrap gap-3">
+          <Button onClick={handleConnect} className="w-full sm:w-auto">
+            Connect Google Calendar
+          </Button>
+          {fetchError && (
+            <Button
+              variant="secondary"
+              onClick={fetchEvents}
+              className="w-full sm:w-auto"
+            >
+              Retry
+            </Button>
+          )}
+        </div>
       </Card>
     );
   }
@@ -122,10 +158,13 @@ export function GoogleCalendarSection({
     <Card title="Your calendar" icon={<CalendarIcon />}>
       <div className="space-y-4">
         <p className="text-sm text-slate-600">
-          Availability is automatically calculated from your calendar and working hours.
+          Your events are read-only. Availability is calculated from your
+          calendar and working hours.
         </p>
         {sortedDays.length === 0 ? (
-          <p className="text-sm text-slate-500">No events in the next 14 days.</p>
+          <p className="text-sm text-slate-500 py-2">
+            No events in the next 14 days. Your schedule is clear.
+          </p>
         ) : (
           <ul className="space-y-4">
             {sortedDays.map((dayKey) => (
@@ -165,7 +204,13 @@ export function GoogleCalendarSection({
             </p>
           </div>
         )}
-        <div className="pt-2 border-t border-slate-200">
+        <div className="pt-2 border-t border-slate-200 flex items-center justify-between gap-4 flex-wrap">
+          <a
+            href="/privacy"
+            className="text-xs text-slate-500 hover:text-slate-700"
+          >
+            Privacy
+          </a>
           <button
             type="button"
             onClick={handleDisconnect}

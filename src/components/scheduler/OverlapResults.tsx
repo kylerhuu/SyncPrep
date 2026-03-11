@@ -55,10 +55,11 @@ export function OverlapResults({
   if (showInputPrompt && allSlots.length === 0 && !hasValidInputNoOverlap) {
     return (
       <Card title="Best overlapping times" icon={<ClockIcon />}>
-        <p className="text-sm text-slate-500 leading-relaxed">
-          Enter both time zones and at least one availability window for each
-          person to see overlapping times.
-        </p>
+        <div className="py-2">
+          <p className="text-sm text-slate-600 leading-relaxed">
+            Enter both time zones and working hours to see overlapping times.
+          </p>
+        </div>
       </Card>
     );
   }
@@ -66,10 +67,14 @@ export function OverlapResults({
   if (hasValidInputNoOverlap && allSlots.length === 0) {
     return (
       <Card title="Best overlapping times" icon={<ClockIcon />}>
-        <p className="text-sm text-amber-700 leading-relaxed">
-          No overlapping times found for the given availability and duration.
-          Try different windows or a shorter meeting duration.
-        </p>
+        <div className="py-2">
+          <p className="text-sm text-amber-700 leading-relaxed mb-1">
+            No overlap found for this week.
+          </p>
+          <p className="text-xs text-slate-500">
+            Try different working hours, a shorter meeting, or adjust time zones.
+          </p>
+        </div>
       </Card>
     );
   }

@@ -19,7 +19,7 @@ SyncPrep can import your Google Calendar events (read-only) so you see them next
    - Application type: **Web application**.
    - Add **Authorized redirect URIs**:
      - `http://localhost:3000/api/auth/google/callback` (local)
-     - `https://your-production-domain.com/api/auth/google/callback` (production).
+     - `https://your-app.vercel.app/api/auth/google/callback` (production; use your Vercel deployment URL)
    - Copy the **Client ID** and **Client secret**.
 
 2. **Environment variables** (in `.env.local`)

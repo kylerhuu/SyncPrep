@@ -59,7 +59,7 @@ export function MeetingContextForm({
               ))}
             </select>
             <p className="mt-1.5 text-xs text-slate-500">
-              Used to tailor the prep notes and suggested questions.
+              Used to tailor your meeting brief and suggested questions.
             </p>
           </div>
           <div>
@@ -106,7 +106,7 @@ export function MeetingContextForm({
 
   if (noCard) return formContent;
   return (
-    <Card title="Meeting context (for AI prep)">
+    <Card title="Meeting context">
       {formContent}
     </Card>
   );

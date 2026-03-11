@@ -114,7 +114,7 @@ export function WeeklyScheduleSection({
             Weekly schedule
           </h2>
           <p className="mt-1 text-sm text-slate-500">
-            See your calendar, busy blocks, and open gaps at a glance.
+            Your week at a glance—busy blocks and open gaps.
           </p>
         </div>
         <Link
@@ -127,7 +127,7 @@ export function WeeklyScheduleSection({
       {!userTimeZone.trim() ? (
         <div className="rounded-2xl border border-slate-200 bg-slate-50/50 px-5 py-8 text-center">
           <p className="text-sm text-slate-600">
-            Set your time zone above to see your weekly schedule.
+            Set your time zone above to see your week.
           </p>
         </div>
       ) : (

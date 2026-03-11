@@ -12,9 +12,24 @@ AI-powered meeting preparation and scheduling for students and early-career prof
 
 1. Install dependencies: `npm install`
 2. Copy env example: `cp .env.local.example .env.local`
-3. Add your OpenAI API key to `.env.local`: `OPENAI_API_KEY=sk-...`
-4. (Optional) For **Google Calendar import**: add `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and `SESSION_SECRET` to `.env.local`. See [docs/GOOGLE_CALENDAR_SETUP.md](docs/GOOGLE_CALENDAR_SETUP.md).
+3. Add your OpenAI API key: `OPENAI_API_KEY=sk-...` (required for meeting brief generation)
+4. (Optional) For **Google Calendar import**: add `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and `SESSION_SECRET`. See [docs/GOOGLE_CALENDAR_SETUP.md](docs/GOOGLE_CALENDAR_SETUP.md).
 5. Run dev: `npm run dev` → open [http://localhost:3000](http://localhost:3000)
+
+## Deployment (Vercel)
+
+1. **Push to GitHub** and import the repo in [Vercel](https://vercel.com).
+
+2. **Environment variables** (Project Settings → Environment Variables):
+   - `OPENAI_API_KEY` — required for meeting brief generation
+   - `GOOGLE_CLIENT_ID` — optional, for Google Calendar
+   - `GOOGLE_CLIENT_SECRET` — optional, for Google Calendar
+   - `SESSION_SECRET` — required if using Google Calendar (32+ char random string)
+
+3. **Google OAuth** (if using Calendar): Add your production callback to [Google Cloud Console](https://console.cloud.google.com/apis/credentials):
+   - `https://your-domain.vercel.app/api/auth/google/callback`
+
+4. Deploy. OAuth redirects use `request.url.origin`, so no `NEXTAUTH_URL` or hardcoded domain is needed.
 
 ## Scripts
 
