@@ -1,58 +1,95 @@
+/**
+ * Timezone and overlap utilities for SyncPrep scheduling.
+ *
+ * OVERLAP ALGORITHM (brief):
+ * 1. Reference day: "today" in zone A; same calendar day in zone B (so both sides use one logical day).
+ * 2. Convert each availability window (local start/end) to UTC for that day; if end <= start, treat as overnight (end += 1 day).
+ * 3. For each pair (window A, window B): overlap = [max(A_start, B_start), min(A_end, B_end)]. Skip if overlap_start >= overlap_end.
+ * 4. Within each overlap, step by meeting duration (30/60/90 min); emit slots [cursor, cursor + duration] while cursor + duration <= overlap_end.
+ * 5. Dedupe by start ISO, sort by start, return top N suggestions.
+ *
+ * Uses Luxon (IANA time zones, DST-safe) for all conversions.
+ */
+
 import { DateTime } from "luxon";
 import type { TimeWindow } from "@/types";
 
-const SLOT_DURATION_MINUTES = 60;
-const MAX_SUGGESTIONS = 5;
-
-/**
- * Resolve city or label to IANA timezone. Simple lookup for common cities.
- * User can also type IANA zones directly (e.g. America/New_York).
- */
+/** Common city/region names → IANA time zone. User can also type IANA directly (e.g. America/New_York). */
 const CITY_TO_TZ: Record<string, string> = {
   "new york": "America/New_York",
-  "nyc": "America/New_York",
+  nyc: "America/New_York",
   "los angeles": "America/Los_Angeles",
-  "la": "America/Los_Angeles",
-  "chicago": "America/Chicago",
-  "london": "Europe/London",
-  "paris": "Europe/Paris",
-  "berlin": "Europe/Berlin",
-  "tokyo": "Asia/Tokyo",
-  "singapore": "Asia/Singapore",
-  "sydney": "Australia/Sydney",
-  "india": "Asia/Kolkata",
-  "mumbai": "Asia/Kolkata",
-  "pacific": "America/Los_Angeles",
-  "eastern": "America/New_York",
-  "central": "America/Chicago",
-  "mountain": "America/Denver",
-  "utc": "UTC",
+  la: "America/Los_Angeles",
+  chicago: "America/Chicago",
+  "san francisco": "America/Los_Angeles",
+  london: "Europe/London",
+  paris: "Europe/Paris",
+  berlin: "Europe/Berlin",
+  tokyo: "Asia/Tokyo",
+  singapore: "Asia/Singapore",
+  sydney: "Australia/Sydney",
+  "hong kong": "Asia/Hong_Kong",
+  mumbai: "Asia/Kolkata",
+  india: "Asia/Kolkata",
+  "new delhi": "Asia/Kolkata",
+  eastern: "America/New_York",
+  pacific: "America/Los_Angeles",
+  central: "America/Chicago",
+  mountain: "America/Denver",
+  utc: "UTC",
+  gmt: "UTC",
 };
 
 export function resolveTimezone(input: string): string {
   if (!input.trim()) return "UTC";
-  const normalized = input.trim().toLowerCase();
-  return CITY_TO_TZ[normalized] ?? input.trim();
+  const key = input.trim().toLowerCase();
+  return CITY_TO_TZ[key] ?? input.trim();
 }
 
-/**
- * Parse "HH:mm" in the given zone for a reference date (today).
- */
-function parseLocalTime(timeStr: string, zone: string, refDate: DateTime): DateTime {
-  const [h, m] = timeStr.split(":").map(Number);
-  return refDate.setZone(zone).set({ hour: h ?? 0, minute: m ?? 0, second: 0, millisecond: 0 });
+/** Returns true if the string is a valid IANA time zone (Luxon can parse it). */
+export function isValidZone(zoneOrCity: string): boolean {
+  if (!zoneOrCity.trim()) return false;
+  const resolved = resolveTimezone(zoneOrCity.trim());
+  return DateTime.now().setZone(resolved).isValid;
 }
 
-/**
- * Convert a time window in local time to UTC start/end for a given day (today).
- */
+/** Valid time window: start and end are "HH:mm" and start < end (same-day windows only for simplicity). */
+export function validateTimeWindow(w: TimeWindow): { valid: boolean; error?: string } {
+  const start = w.start?.trim() ?? "";
+  const end = w.end?.trim() ?? "";
+  if (!start || !end) return { valid: false, error: "Start and end time required" };
+  const [sh, sm] = start.split(":").map(Number);
+  const [eh, em] = end.split(":").map(Number);
+  if (Number.isNaN(sh) || Number.isNaN(sm) || Number.isNaN(eh) || Number.isNaN(em)) {
+    return { valid: false, error: "Use HH:mm format" };
+  }
+  const startMins = sh * 60 + sm;
+  const endMins = eh * 60 + em;
+  if (endMins <= startMins) {
+    return { valid: false, error: "End time must be after start time" };
+  }
+  return { valid: true };
+}
+
 function windowToUTC(
-  window: TimeWindow,
+  w: TimeWindow,
   zone: string,
-  refDate: DateTime
+  dayStart: DateTime
 ): { start: DateTime; end: DateTime } {
-  const start = parseLocalTime(window.start, zone, refDate);
-  let end = parseLocalTime(window.end, zone, refDate);
+  const [sh, sm] = w.start.split(":").map(Number);
+  const [eh, em] = w.end.split(":").map(Number);
+  const start = dayStart.setZone(zone).set({
+    hour: sh ?? 0,
+    minute: sm ?? 0,
+    second: 0,
+    millisecond: 0,
+  });
+  let end = dayStart.setZone(zone).set({
+    hour: eh ?? 0,
+    minute: em ?? 0,
+    second: 0,
+    millisecond: 0,
+  });
   if (end <= start) end = end.plus({ days: 1 });
   return { start: start.toUTC(), end: end.toUTC() };
 }
@@ -66,51 +103,44 @@ export interface OverlapSlotResult {
 }
 
 /**
- * Find overlapping slots between two time zones and availability windows.
- * Uses "today" in zone A and the same calendar day in zone B; generates 1-hour slots.
+ * Find all overlapping meeting slots for one reference day.
+ * @param durationMinutes — 30, 60, or 90
  */
 export function findOverlappingSlots(
   zoneA: string,
   windowsA: TimeWindow[],
   zoneB: string,
   windowsB: TimeWindow[],
-  refDate: DateTime = DateTime.utc()
+  refDate: DateTime = DateTime.utc(),
+  durationMinutes: number = 60
 ): OverlapSlotResult[] {
   const tzA = resolveTimezone(zoneA);
   const tzB = resolveTimezone(zoneB);
-  const dayStartA = refDate.setZone(tzA).startOf("day");
-  const dayStartB = dayStartA.setZone(tzB).startOf("day");
+  const dayA = refDate.setZone(tzA).startOf("day");
+  const dayB = dayA.setZone(tzB).startOf("day");
 
-  const rangesA: { start: DateTime; end: DateTime }[] = [];
-  for (const w of windowsA) {
-    const { start, end } = windowToUTC(w, tzA, dayStartA);
-    rangesA.push({ start, end });
-  }
-  const rangesB: { start: DateTime; end: DateTime }[] = [];
-  for (const w of windowsB) {
-    const { start, end } = windowToUTC(w, tzB, dayStartB);
-    rangesB.push({ start, end });
-  }
+  const validA = windowsA.filter((w) => validateTimeWindow(w).valid);
+  const validB = windowsB.filter((w) => validateTimeWindow(w).valid);
+  const rangesA = validA.map((w) => windowToUTC(w, tzA, dayA));
+  const rangesB = validB.map((w) => windowToUTC(w, tzB, dayB));
 
   const slots: OverlapSlotResult[] = [];
-  const slotDuration = SLOT_DURATION_MINUTES;
+  const duration = { minutes: durationMinutes };
 
   for (const ra of rangesA) {
     for (const rb of rangesB) {
-      const overlapStart = DateTime.max(ra.start, rb.start);
-      const overlapEnd = DateTime.min(ra.end, rb.end);
-      if (overlapStart >= overlapEnd) continue;
-
-      let cursor = overlapStart;
-      while (cursor.plus({ minutes: slotDuration }) <= overlapEnd) {
-        const slotEnd = cursor.plus({ minutes: slotDuration });
+      const start = DateTime.max(ra.start, rb.start);
+      const end = DateTime.min(ra.end, rb.end);
+      if (start >= end) continue;
+      let cursor = start;
+      while (cursor.plus(duration).valueOf() <= end.valueOf()) {
+        const slotEnd = cursor.plus(duration);
         const startISO = cursor.toISO()!;
         const endISO = slotEnd.toISO()!;
-        const label = `${cursor.setZone(tzA).toFormat("h:mm a ZZZ")} – ${slotEnd.setZone(tzA).toFormat("h:mm a ZZZ")}`;
         slots.push({
-          start: cursor.toISO()!,
+          start: startISO,
           end: endISO,
-          label,
+          label: `${cursor.setZone(tzA).toFormat("h:mm a")} – ${slotEnd.setZone(tzA).toFormat("h:mm a")}`,
           startISO,
           endISO,
         });
@@ -119,24 +149,23 @@ export function findOverlappingSlots(
     }
   }
 
-  // Dedupe by start time and sort
   const seen = new Set<string>();
   const unique = slots.filter((s) => {
-    const key = s.startISO;
-    if (seen.has(key)) return false;
-    seen.add(key);
+    if (seen.has(s.startISO)) return false;
+    seen.add(s.startISO);
     return true;
   });
   unique.sort((a, b) => a.startISO.localeCompare(b.startISO));
   return unique;
 }
 
-/**
- * Return the best N suggestions (first N in sorted order, e.g. morning slots first).
- */
 export function getBestSuggestions(
   slots: OverlapSlotResult[],
-  n: number = MAX_SUGGESTIONS
+  n: number = 5
 ): OverlapSlotResult[] {
   return slots.slice(0, n);
 }
+
+/** Supported meeting durations in minutes. */
+export const MEETING_DURATIONS = [30, 60, 90] as const;
+export type MeetingDurationMinutes = (typeof MEETING_DURATIONS)[number];

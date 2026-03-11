@@ -24,12 +24,19 @@ AI-powered meeting preparation and scheduling for students and early-career prof
 
 ## Flow
 
-1. **Landing** (`/`) — value prop and “Get started” to `/schedule`
-2. **Schedule** (`/schedule`) — left: time zones, availability windows, meeting context (type, resume, JD); right: overlapping slots, “Add to Google Calendar,” and “Generate prep notes”
-3. **API** `POST /api/prep` — sends meeting type + optional context/resume/job description to OpenAI; returns structured prep JSON
+1. **Landing** (`/`) — value prop and “Get started” → `/schedule`
+2. **Schedule** (`/schedule`) — time zones, availability, meeting context; overlapping slots, calendar link, and “Generate prep notes”. Prep notes also saved to sessionStorage.
+3. **Prep results** (`/prep`) — focused view of last generated prep notes (read from sessionStorage). Link appears on schedule after generating.
+4. **API** `POST /api/prep` — meeting type + optional context/resume/job description → OpenAI → structured prep JSON
 
-State is kept in React and optionally in `sessionStorage` so a refresh keeps your inputs and selected time.
+State: React state + sessionStorage for form data, selected slot, and prep notes.
+
+## Folder structure
+
+See [docs/FOLDER_STRUCTURE.md](docs/FOLDER_STRUCTURE.md) for the full tree. Summary: `src/app` (layout, pages, api), `src/components` (ui, scheduler, prep), `src/lib` (timezone, calendar), `src/types`.
 
 ## Docs
 
-See [docs/MVP_PLAN.md](docs/MVP_PLAN.md) for product definition, MVP scope, and architecture.
+- [docs/MVP_SPEC.md](docs/MVP_SPEC.md) — refined MVP definition, user flow, components, API, state
+- [docs/MVP_PLAN.md](docs/MVP_PLAN.md) — original plan
+- [docs/FOLDER_STRUCTURE.md](docs/FOLDER_STRUCTURE.md) — folder structure

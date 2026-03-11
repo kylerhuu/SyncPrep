@@ -10,6 +10,17 @@ const MEETING_TYPES: { value: MeetingType; label: string }[] = [
   { value: "other", label: "Other" },
 ];
 
+interface MeetingContextFormProps {
+  meetingType: MeetingType;
+  context: string;
+  resume: string;
+  jobDescription: string;
+  onMeetingTypeChange: (v: MeetingType) => void;
+  onContextChange: (v: string) => void;
+  onResumeChange: (v: string) => void;
+  onJobDescriptionChange: (v: string) => void;
+}
+
 export function MeetingContextForm({
   meetingType,
   context,
@@ -19,61 +30,58 @@ export function MeetingContextForm({
   onContextChange,
   onResumeChange,
   onJobDescriptionChange,
-}: {
-  meetingType: MeetingType;
-  context: string;
-  resume: string;
-  jobDescription: string;
-  onMeetingTypeChange: (v: MeetingType) => void;
-  onContextChange: (v: string) => void;
-  onResumeChange: (v: string) => void;
-  onJobDescriptionChange: (v: string) => void;
-}) {
+}: MeetingContextFormProps) {
+  const inputBase =
+    "w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20";
+  const labelClass = "mb-1.5 block text-sm font-medium text-slate-700";
+
   return (
     <Card title="Meeting context (for AI prep)">
-      <div className="space-y-4">
+      <div className="space-y-5">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Meeting type</label>
+          <label className={labelClass}>Meeting type</label>
           <select
             value={meetingType}
             onChange={(e) => onMeetingTypeChange(e.target.value as MeetingType)}
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            className={`${inputBase} min-h-[40px]`}
           >
-            {MEETING_TYPES.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
+            {MEETING_TYPES.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
               </option>
             ))}
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Context (optional)</label>
+          <label className={labelClass}>
+            Meeting goal or context (optional)
+          </label>
           <textarea
             value={context}
             onChange={(e) => onContextChange(e.target.value)}
-            placeholder="e.g. 30-min call with recruiter, technical round"
+            placeholder="e.g. 30-min technical screen, learn about the team"
             rows={2}
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            className={`${inputBase} min-h-[80px] resize-y`}
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Resume (optional, for interviews)</label>
+          <label className={labelClass}>Resume (optional)</label>
           <textarea
             value={resume}
             onChange={(e) => onResumeChange(e.target.value)}
-            placeholder="Paste your resume text here"
+            placeholder="Paste resume text"
             rows={4}
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 font-mono text-xs"
+            className={`${inputBase} min-h-[100px] resize-y font-mono text-xs`}
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Job description (optional)</label>
+          <label className={labelClass}>Job description (optional)</label>
           <textarea
             value={jobDescription}
             onChange={(e) => onJobDescriptionChange(e.target.value)}
-            placeholder="Paste the job description here"
+            placeholder="Paste job description"
             rows={4}
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 font-mono text-xs"
+            className={`${inputBase} min-h-[100px] resize-y font-mono text-xs`}
           />
         </div>
       </div>

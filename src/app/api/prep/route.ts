@@ -1,72 +1,108 @@
 import { NextResponse } from "next/server";
-import OpenAI from "openai";
 import type { PrepNotes } from "@/types";
 
-const PREP_SYSTEM = `You are a concise meeting preparation assistant. You output only valid JSON with no markdown or extra text.
-Use this exact structure (omit keys if no content):
-{
-  "meetingSummary": "1-2 sentence summary of the meeting and how to approach it",
-  "talkingPoints": ["point 1", "point 2", ...],
-  "questionsToPrepare": ["question 1", ...],
-  "strengthsToHighlight": ["strength 1", ...],
-  "skillsToReview": ["skill or topic 1", ...],
-  "gapsOrMissing": ["gap 1", ...],
-  "followUpQuestions": ["question to ask 1", ...]
+function toArray(value: unknown): string[] {
+  if (Array.isArray(value))
+    return value
+      .filter((x): x is string => typeof x === "string")
+      .map((s) => s.trim())
+      .filter(Boolean);
+  if (typeof value === "string" && value.trim())
+    return [value.trim()];
+  return [];
 }
-Keep each list to 3-6 items. Be specific and actionable. Do not be generic or rambly.`;
 
-function buildUserMessage(
-  meetingType: string,
-  context?: string,
-  resume?: string,
-  jobDescription?: string
-): string {
-  const parts: string[] = [`Meeting type: ${meetingType}.`];
-  if (context?.trim()) parts.push(`Context: ${context.trim()}`);
-  if (resume?.trim()) parts.push(`\nResume:\n${resume.trim()}`);
-  if (jobDescription?.trim()) parts.push(`\nJob description:\n${jobDescription.trim()}`);
-  parts.push("\nGenerate structured preparation notes as JSON.");
-  return parts.join("\n");
+const SYSTEM_PROMPT = `You are a concise meeting preparation assistant. You output only valid JSON—no markdown, no extra text.
+
+Required JSON structure (omit a key only if you have no content for it):
+{
+  "meetingSummary": "One or two sentences: what this meeting is and how to approach it.",
+  "questionsToPrepare": ["Question they might ask or you should prepare for", "..."],
+  "talkingPoints": ["Point to bring up or steer the conversation", "..."],
+  "strengthsToHighlight": ["Strength to mention", "..."],
+  "skillsToReview": ["Skill or topic to brush up on", "..."],
+  "gapsOrMissing": ["Gap vs role or context—only if relevant", "..."],
+  "followUpQuestions": ["Question to ask them at the end", "..."]
 }
+
+Rules:
+- Keep each list to 3–6 items. One short line per item.
+- Be specific and actionable. Do not give generic advice that could apply to any meeting.
+- Do not repeat the same idea across sections. Do not use filler like "research the company" unless you tie it to the resume or job description.
+- When resume or job description is provided, use them: tailor likely questions, strengths, and gaps to the role and the candidate. Reference concrete experience or requirements.
+- meetingSummary must be 1–2 sentences only.`;
 
 export async function POST(request: Request) {
-  let body: { meetingType?: string; context?: string; resume?: string; jobDescription?: string };
+  let body: {
+    meetingType?: string;
+    context?: string;
+    resume?: string;
+    jobDescription?: string;
+  };
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
+
   const meetingType = body.meetingType ?? "other";
-  const userMessage = buildUserMessage(
-    meetingType,
-    body.context,
-    body.resume,
-    body.jobDescription
-  );
+  const parts: string[] = [
+    `Meeting type: ${meetingType}.`,
+    body.context?.trim() && `Meeting goal or context: ${body.context.trim()}`,
+    body.resume?.trim() && `Resume (paste):\n${body.resume.trim()}`,
+    body.jobDescription?.trim() &&
+      `Job description (paste):\n${body.jobDescription.trim()}`,
+  ].filter(Boolean) as string[];
+  const userMessage = `${parts.join("\n\n")}\n\nGenerate structured preparation notes as JSON.`;
+
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    return NextResponse.json(
+      { error: "OPENAI_API_KEY not set. Add it to .env.local." },
+      { status: 500 }
+    );
+  }
 
   try {
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json(
-        { error: "OpenAI API key not configured. Add OPENAI_API_KEY to .env.local." },
-        { status: 500 }
-      );
-    }
+    const { default: OpenAI } = await import("openai");
     const openai = new OpenAI({ apiKey });
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
-        { role: "system", content: PREP_SYSTEM },
+        { role: "system", content: SYSTEM_PROMPT },
         { role: "user", content: userMessage },
       ],
       response_format: { type: "json_object" },
     });
     const raw = completion.choices[0]?.message?.content;
     if (!raw) {
-      return NextResponse.json({ error: "Empty response from OpenAI" }, { status: 500 });
+      return NextResponse.json(
+        { error: "Empty response from OpenAI" },
+        { status: 500 }
+      );
     }
-    const parsed = JSON.parse(raw) as PrepNotes;
-    return NextResponse.json(parsed);
+    let parsed: Record<string, unknown>;
+    try {
+      parsed = JSON.parse(raw) as Record<string, unknown>;
+    } catch {
+      return NextResponse.json(
+        { error: "Invalid JSON from AI; please try again." },
+        { status: 500 }
+      );
+    }
+    const notes: PrepNotes = {
+      meetingSummary:
+        typeof parsed.meetingSummary === "string"
+          ? parsed.meetingSummary.trim()
+          : undefined,
+      talkingPoints: toArray(parsed.talkingPoints),
+      questionsToPrepare: toArray(parsed.questionsToPrepare),
+      strengthsToHighlight: toArray(parsed.strengthsToHighlight),
+      skillsToReview: toArray(parsed.skillsToReview),
+      gapsOrMissing: toArray(parsed.gapsOrMissing),
+      followUpQuestions: toArray(parsed.followUpQuestions),
+    };
+    return NextResponse.json(notes);
   } catch (err) {
     console.error("OpenAI prep error:", err);
     const message = err instanceof Error ? err.message : "OpenAI request failed";

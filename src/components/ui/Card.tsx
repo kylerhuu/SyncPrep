@@ -1,22 +1,24 @@
 import { ReactNode } from "react";
 
-export function Card({
-  title,
-  children,
-  className = "",
-}: {
+interface CardProps {
   title?: string;
   children: ReactNode;
   className?: string;
-}) {
+}
+
+export function Card({ title, children, className = "" }: CardProps) {
   return (
-    <div className={`rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden ${className}`}>
+    <div
+      className={`rounded-xl border border-[var(--border)] bg-[var(--card-bg)] shadow-sm overflow-hidden ${className}`}
+    >
       {title && (
-        <div className="border-b border-gray-100 px-4 py-3 bg-gray-50/80">
-          <h2 className="text-sm font-semibold text-gray-900">{title}</h2>
+        <div className="border-b border-[var(--border)] px-5 py-3.5 bg-slate-50/90">
+          <h2 className="text-sm font-semibold tracking-tight text-slate-900">
+            {title}
+          </h2>
         </div>
       )}
-      <div className="p-4">{children}</div>
+      <div className="p-5">{children}</div>
     </div>
   );
 }

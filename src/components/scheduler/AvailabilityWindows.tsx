@@ -1,37 +1,22 @@
 "use client";
 
 import type { TimeWindow } from "@/types";
+import { validateTimeWindow } from "@/lib/timezone";
+import { Button } from "@/components/ui/Button";
 
-function TimeInput({
-  value,
-  onChange,
-  placeholder = "09:00",
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  placeholder?: string;
-}) {
-  return (
-    <input
-      type="time"
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="rounded border border-gray-300 px-2 py-1.5 text-sm"
-    />
-  );
+interface AvailabilityWindowsProps {
+  windows: TimeWindow[];
+  onChange: (windows: TimeWindow[]) => void;
+  label: string;
 }
 
 export function AvailabilityWindows({
   windows,
   onChange,
   label,
-}: {
-  windows: TimeWindow[];
-  onChange: (w: TimeWindow[]) => void;
-  label: string;
-}) {
+}: AvailabilityWindowsProps) {
   const add = () => onChange([...windows, { start: "09:00", end: "17:00" }]);
-  const remove = (i: number) => onChange(windows.filter((_, idx) => idx !== i));
+  const remove = (i: number) => onChange(windows.filter((_, j) => j !== i));
   const update = (i: number, field: "start" | "end", value: string) => {
     const next = [...windows];
     next[i] = { ...next[i], [field]: value };
@@ -39,42 +24,71 @@ export function AvailabilityWindows({
   };
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <label className="block text-sm font-medium text-gray-700">{label}</label>
-        <button
+        <span className="text-sm font-medium text-slate-700">{label}</span>
+        <Button
           type="button"
+          variant="ghost"
           onClick={add}
-          className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+          className="text-xs py-1 min-h-0"
         >
           + Add window
-        </button>
+        </Button>
       </div>
-      {windows.length === 0 && (
-        <button
+      {windows.length === 0 ? (
+        <Button
           type="button"
+          variant="secondary"
           onClick={add}
-          className="w-full rounded-md border border-dashed border-gray-300 py-2 text-sm text-gray-500 hover:border-gray-400 hover:text-gray-700"
+          className="w-full"
         >
           Add availability window
-        </button>
+        </Button>
+      ) : (
+        <ul className="space-y-3">
+          {windows.map((w, i) => {
+            const { valid, error } = validateTimeWindow(w);
+            return (
+              <li key={i} className="flex flex-col gap-1.5">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <input
+                    type="time"
+                    value={w.start}
+                    onChange={(e) => update(i, "start", e.target.value)}
+                    className={`min-h-[40px] rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 ${
+                      valid ? "border-slate-300" : "border-red-500"
+                    }`}
+                    aria-invalid={!valid}
+                  />
+                  <span className="text-slate-400 text-sm">–</span>
+                  <input
+                    type="time"
+                    value={w.end}
+                    onChange={(e) => update(i, "end", e.target.value)}
+                    className={`min-h-[40px] rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 ${
+                      valid ? "border-slate-300" : "border-red-500"
+                    }`}
+                    aria-invalid={!valid}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => remove(i)}
+                    className="text-sm font-medium text-red-600 hover:text-red-700 focus:outline-none focus-visible:underline min-h-[40px] flex items-center"
+                  >
+                    Remove
+                  </button>
+                </div>
+                {!valid && error && (
+                  <p className="text-xs text-red-600" role="alert">
+                    {error}
+                  </p>
+                )}
+              </li>
+            );
+          })}
+        </ul>
       )}
-      <ul className="space-y-2">
-        {windows.map((w, i) => (
-          <li key={i} className="flex items-center gap-2 flex-wrap">
-            <TimeInput value={w.start} onChange={(v) => update(i, "start", v)} />
-            <span className="text-gray-500">–</span>
-            <TimeInput value={w.end} onChange={(v) => update(i, "end", v)} />
-            <button
-              type="button"
-              onClick={() => remove(i)}
-              className="text-sm text-red-600 hover:text-red-700"
-            >
-              Remove
-            </button>
-          </li>
-        ))}
-      </ul>
     </div>
   );
 }

@@ -1,44 +1,56 @@
 import Link from "next/link";
+import { Button } from "@/components/ui/Button";
 
-export default function HomePage() {
+export default function LandingPage() {
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="border-b border-gray-200 bg-white">
-        <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
-          <span className="text-xl font-semibold text-gray-900">SyncPrep</span>
-          <Link
-            href="/schedule"
-            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition"
-          >
-            Get started
+      <header className="border-b border-[var(--border)] bg-white">
+        <div className="max-w-5xl mx-auto px-5 py-4 sm:px-6 flex items-center justify-between">
+          <span className="text-lg font-semibold tracking-tight text-slate-900">
+            SyncPrep
+          </span>
+          <Link href="/schedule">
+            <Button>Get started</Button>
           </Link>
         </div>
       </header>
-      <main className="flex-1 flex flex-col items-center justify-center px-4 py-16">
-        <h1 className="text-3xl md:text-4xl font-bold text-gray-900 text-center max-w-2xl mb-4">
+      <main className="flex-1 flex flex-col items-center justify-center px-5 py-20 sm:px-6">
+        <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 text-center max-w-2xl mb-5 leading-tight">
           Schedule across time zones. Prepare with AI.
         </h1>
-        <p className="text-lg text-gray-600 text-center max-w-xl mb-10">
-          Find the best meeting times for you and your contact, then get structured prep notes—including resume and job description analysis for interviews.
+        <p className="text-lg text-slate-600 text-center max-w-xl mb-12 leading-relaxed">
+          Find overlapping meeting times, get a Google Calendar link, and
+          generate structured prep notes—including resume and job description
+          analysis for interviews.
         </p>
-        <Link
-          href="/schedule"
-          className="rounded-lg bg-blue-600 px-6 py-3 text-base font-medium text-white hover:bg-blue-700 transition"
-        >
-          Start scheduling
+        <Link href="/schedule">
+          <Button className="px-6 py-3 text-base">Start scheduling</Button>
         </Link>
-        <ul className="mt-16 grid gap-6 sm:grid-cols-3 text-center max-w-3xl">
-          <li className="p-4">
-            <span className="block text-2xl font-semibold text-gray-900 mb-1">Timezone-aware</span>
-            <span className="text-gray-600">Enter two time zones and availability. See overlapping slots and top suggestions.</span>
+        <ul className="mt-20 grid gap-8 sm:grid-cols-3 text-center max-w-3xl w-full">
+          <li className="rounded-xl border border-[var(--border)] bg-white p-6 text-left shadow-sm">
+            <span className="block text-base font-semibold text-slate-900 mb-2">
+              Timezone-aware
+            </span>
+            <span className="text-sm text-slate-600 leading-relaxed">
+              Two time zones and availability → overlapping slots and top
+              suggestions.
+            </span>
           </li>
-          <li className="p-4">
-            <span className="block text-2xl font-semibold text-gray-900 mb-1">Calendar link</span>
-            <span className="text-gray-600">One click to open a Google Calendar event for your chosen time.</span>
+          <li className="rounded-xl border border-[var(--border)] bg-white p-6 text-left shadow-sm">
+            <span className="block text-base font-semibold text-slate-900 mb-2">
+              Calendar link
+            </span>
+            <span className="text-sm text-slate-600 leading-relaxed">
+              One click to open a Google Calendar event for your chosen time.
+            </span>
           </li>
-          <li className="p-4">
-            <span className="block text-2xl font-semibold text-gray-900 mb-1">AI prep notes</span>
-            <span className="text-gray-600">Meeting context plus optional resume & job description for structured prep.</span>
+          <li className="rounded-xl border border-[var(--border)] bg-white p-6 text-left shadow-sm">
+            <span className="block text-base font-semibold text-slate-900 mb-2">
+              AI prep notes
+            </span>
+            <span className="text-sm text-slate-600 leading-relaxed">
+              Meeting type, optional resume & job description → structured prep.
+            </span>
           </li>
         </ul>
       </main>

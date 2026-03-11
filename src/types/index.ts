@@ -1,14 +1,15 @@
 export type MeetingType = "interview" | "networking" | "team_meeting" | "other";
 
 export interface TimeWindow {
-  start: string; // "09:00"
-  end: string;   // "12:00"
+  start: string;
+  end: string;
 }
 
+/** @deprecated Use OverlapSlotResult from @/lib/timezone for slot types. */
 export interface OverlapSlot {
-  start: string;   // ISO in UTC or display string
+  start: string;
   end: string;
-  label: string;   // e.g. "9:00 AM - 10:00 AM (EST)"
+  label: string;
   startISO: string;
   endISO: string;
 }

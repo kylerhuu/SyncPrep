@@ -1,17 +1,39 @@
 /**
- * Convert ISO 8601 string to Google Calendar format: YYYYMMDDTHHMMSSZ (UTC).
- * Strips hyphens, colons, fractional seconds; normalizes timezone to Z.
+ * Google Calendar "Add event" URL builder.
+ *
+ * Uses the action=TEMPLATE format. Times must be in UTC (ISO 8601).
+ * Google expects: dates=YYYYMMDDTHHMMSSZ/YYYYMMDDTHHMMSSZ (start/end).
  */
-function toGoogleDatesFormat(iso: string): string {
+
+const CALENDAR_BASE = "https://www.google.com/calendar/render";
+
+/**
+ * Convert an ISO 8601 string to Google's format: YYYYMMDDTHHMMSSZ (UTC).
+ * Strips hyphens, colons, and fractional seconds; normalizes timezone to Z.
+ */
+function toGoogleDate(iso: string): string {
+  if (!iso || typeof iso !== "string" || !iso.includes("T")) return "";
   const s = iso.replace(/[-:]/g, "").replace(/\.\d+/, "");
-  const withoutTz = s.split(/[Z+-]/)[0];
-  return withoutTz + "Z";
+  const base = s.split(/[Z+-]/)[0];
+  return base ? base + "Z" : "";
+}
+
+export interface CalendarEventOptions {
+  /** Event title (e.g. "Meeting") */
+  title?: string;
+  /** Optional description body */
+  details?: string;
 }
 
 /**
- * Build a Google Calendar "Add event" URL for a given time slot.
- * User opens in new tab to add to their calendar.
- * Uses www.google.com/calendar/render and keeps the slash in dates unencoded so Google accepts it.
+ * Build a Google Calendar URL that opens the "Add event" form with pre-filled
+ * start and end times (UTC). The user's calendar will show the event in their
+ * local timezone.
+ *
+ * @param startISO - Start time in ISO 8601 (e.g. from Luxon toISO())
+ * @param endISO - End time in ISO 8601
+ * @param title - Event title (default "Meeting")
+ * @param details - Optional description
  */
 export function buildGoogleCalendarUrl(
   startISO: string,
@@ -19,18 +41,16 @@ export function buildGoogleCalendarUrl(
   title: string = "Meeting",
   details: string = ""
 ): string {
-  const base = "https://www.google.com/calendar/render";
-  const startStr = toGoogleDatesFormat(startISO);
-  const endStr = toGoogleDatesFormat(endISO);
-  const params = new URLSearchParams();
-  params.set("action", "TEMPLATE");
-  params.set("text", title);
-  // dates must be start/end with a literal slash; building manually so slash isn't encoded
-  const dates = `${startStr}/${endStr}`;
-  params.set("dates", dates);
+  const startStr = toGoogleDate(startISO);
+  const endStr = toGoogleDate(endISO);
+  if (!startStr || !endStr) return CALENDAR_BASE;
+
+  const params = new URLSearchParams({
+    action: "TEMPLATE",
+    text: title,
+    dates: `${startStr}/${endStr}`,
+  });
   if (details) params.set("details", details);
-  const query = params.toString();
-  // Google expects dates=YYYYMMDDTHHMMSSZ/YYYYMMDDTHHMMSSZ - re-insert slash if it was encoded
-  const finalQuery = query.includes("%2F") ? query.replace("%2F", "/") : query;
-  return `${base}?${finalQuery}`;
+  const query = params.toString().replace("%2F", "/");
+  return `${CALENDAR_BASE}?${query}`;
 }
