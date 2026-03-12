@@ -321,58 +321,75 @@ export default function SchedulePage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10">
           <div className="space-y-8">
+            {/* Step 1 — Connect calendar (first, prominent) */}
+            <section aria-label="Connect your calendar" className="space-y-3">
+              <h2 className="text-base font-bold text-slate-900 tracking-tight">
+                Step 1 — Connect your Google Calendar
+              </h2>
+              <p className="text-sm text-slate-600 leading-relaxed">
+                Connect your calendar to automatically detect busy times and open gaps.
+              </p>
+              <div className="rounded-2xl border-2 border-blue-200/70 bg-gradient-to-br from-blue-50/50 to-white shadow-md overflow-hidden">
+                <GoogleCalendarSection
+                  userTimeZone={zoneA}
+                  onCalendarChange={onCalendarChange}
+                  derivedAvailabilityToday={derivedAvailabilityToday}
+                />
+              </div>
+            </section>
+
+            {/* Step 2 — Find meeting time */}
+            <section aria-label="Find the best meeting time" className="space-y-3">
+              <h2 className="text-base font-bold text-slate-900 tracking-tight">
+                Step 2 — Find the best meeting time
+              </h2>
+              <p className="text-sm text-slate-600 leading-relaxed">
+                Enter time zones and working hours to find the best overlap.
+              </p>
+              <div className="rounded-2xl border border-slate-200/80 bg-surface-elevated overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 card-hover">
+                <div className="border-b border-slate-200/80 px-5 py-4 bg-gradient-to-r from-slate-50 to-white">
+                  <h3 className="text-sm font-semibold tracking-tight text-slate-800">
+                    Time zones & working hours
+                  </h3>
+                </div>
+                <div className="p-5 space-y-6">
+                  <TimezoneFields
+                    zoneA={zoneA}
+                    zoneB={zoneB}
+                    onZoneAChange={setZoneA}
+                    onZoneBChange={setZoneB}
+                    errorZoneA={validation.errorZoneA}
+                    errorZoneB={validation.errorZoneB}
+                  />
+                  <DurationSelect
+                    value={duration}
+                    onChange={setDuration}
+                  />
+                  <WorkingHoursInput
+                    value={workingHoursA}
+                    onChange={setWorkingHoursA}
+                    label="Your working hours"
+                    helperText={
+                      calendarConnected
+                        ? "Used with your calendar to find your free slots. Busy times come from your calendar."
+                        : "When you're generally available. Connect your calendar above to use your real busy and free times."
+                    }
+                  />
+                  <WorkingHoursInput
+                    value={workingHoursB}
+                    onChange={setWorkingHoursB}
+                    label="Other person's working hours"
+                  />
+                </div>
+              </div>
+            </section>
+
             <WeeklyScheduleSection
               userTimeZone={zoneA}
               workingHours={workingHoursA}
               events={calendarEvents}
               connected={calendarConnected}
               selectedSlot={selectedSlot}
-            />
-            <section aria-label="Find a meeting time">
-              <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-3">
-                Step 1 — Find a meeting time
-              </p>
-              <div className="rounded-2xl border border-slate-200/80 bg-surface-elevated overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 card-hover">
-                <div className="border-b border-slate-200/80 px-5 py-4 bg-gradient-to-r from-slate-50 to-white">
-                  <h2 className="text-sm font-semibold tracking-tight text-slate-800">
-                    Time zones & availability
-                  </h2>
-                </div>
-              <div className="p-5 space-y-6">
-                <TimezoneFields
-                  zoneA={zoneA}
-                  zoneB={zoneB}
-                  onZoneAChange={setZoneA}
-                  onZoneBChange={setZoneB}
-                  errorZoneA={validation.errorZoneA}
-                  errorZoneB={validation.errorZoneB}
-                />
-                <DurationSelect
-                  value={duration}
-                  onChange={setDuration}
-                />
-                <WorkingHoursInput
-                  value={workingHoursA}
-                  onChange={setWorkingHoursA}
-                  label="Your working hours"
-                  helperText={
-                    calendarConnected
-                      ? "Availability is calculated from your calendar and working hours."
-                      : undefined
-                  }
-                />
-                <WorkingHoursInput
-                  value={workingHoursB}
-                  onChange={setWorkingHoursB}
-                  label="Other person's working hours"
-                />
-              </div>
-              </div>
-            </section>
-            <GoogleCalendarSection
-              userTimeZone={zoneA}
-              onCalendarChange={onCalendarChange}
-              derivedAvailabilityToday={derivedAvailabilityToday}
             />
           </div>
 
@@ -403,9 +420,12 @@ export default function SchedulePage() {
                 </p>
               ) : null}
             </section>
-            <section className="space-y-1" aria-label="Preparation notes">
-              <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-3">
-                Step 2 — Generate meeting brief
+            <section className="space-y-3" aria-label="Generate meeting prep">
+              <h2 className="text-base font-bold text-slate-900 tracking-tight">
+                Step 3 — Generate quick meeting prep
+              </h2>
+              <p className="text-sm text-slate-600 leading-relaxed">
+                Generate a quick meeting brief, interview prep, or talking points.
               </p>
               <PrepNotesPanel
                 notes={prepNotes}
