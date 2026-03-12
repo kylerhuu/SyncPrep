@@ -298,6 +298,12 @@ export default function HomePage() {
             >
               Privacy
             </Link>
+            <Link
+              href="/terms"
+              className="text-sm text-slate-500 hover:text-slate-800 transition-colors font-medium"
+            >
+              Terms
+            </Link>
           </div>
           <Link
             href="/schedule"
