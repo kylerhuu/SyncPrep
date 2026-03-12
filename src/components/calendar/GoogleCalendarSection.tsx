@@ -145,6 +145,8 @@ export function GoogleCalendarSection({
     );
   }
 
+  const [eventsCollapsed, setEventsCollapsed] = useState(false);
+
   const eventsByDay = data.events.reduce<Record<string, CalendarEventItem[]>>((acc, ev) => {
     const dt = DateTime.fromISO(ev.start, { setZone: true }).setZone(zone);
     const key = dt.toISODate() ?? ev.start.slice(0, 10);
@@ -153,46 +155,81 @@ export function GoogleCalendarSection({
     return acc;
   }, {});
   const sortedDays = Object.keys(eventsByDay).sort();
+  const totalEvents = data.events.length;
+
+  const toggleEventsLabel = eventsCollapsed ? "Show events" : "Minimize events";
 
   return (
     <Card title="Your calendar" icon={<CalendarIcon />}>
       <div className="space-y-4">
         <p className="text-sm text-slate-600">
-          Your events are read-only. Availability is calculated from your
-          calendar and working hours.
+          Your events are read-only. We use them with your working hours to find free slots.
         </p>
         {sortedDays.length === 0 ? (
           <p className="text-sm text-slate-500 py-2">
             No events in the next 14 days. Your schedule is clear.
           </p>
+        ) : eventsCollapsed ? (
+          <div className="rounded-xl border border-slate-200 bg-slate-50/80 px-4 py-3 flex items-center justify-between gap-4 flex-wrap">
+            <p className="text-sm text-slate-600">
+              {sortedDays.length} {sortedDays.length === 1 ? "day" : "days"}, {totalEvents} {totalEvents === 1 ? "event" : "events"}
+            </p>
+            <button
+              type="button"
+              onClick={() => setEventsCollapsed(false)}
+              className="text-sm font-medium text-blue-600 hover:text-blue-700 hover:underline"
+            >
+              {toggleEventsLabel}
+            </button>
+          </div>
         ) : (
-          <ul className="space-y-4">
-            {sortedDays.map((dayKey) => (
-              <li key={dayKey}>
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">
-                  {formatDayHeader(eventsByDay[dayKey][0].start, zone)}
-                </p>
-                <ul className="space-y-1.5">
-                  {eventsByDay[dayKey].map((ev) => (
-                    <li
-                      key={ev.id}
-                      className="flex items-start gap-2 rounded-xl border border-amber-400/60 bg-gradient-to-r from-amber-100 to-amber-200/90 px-3 py-2.5 text-sm shadow-sm"
-                    >
-                      <span className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-amber-600" aria-hidden title="Busy" />
-                      <div className="min-w-0 flex-1">
-                        <p className="font-medium text-amber-950 truncate">{ev.summary}</p>
-                        <p className="text-xs text-amber-900/90 tabular-nums">
-                          <span className="font-semibold">Busy</span>
-                          {" · "}
-                          {formatEventTime(ev.start, ev.end, zone)}
-                        </p>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </li>
-            ))}
-          </ul>
+          <>
+            <div className="flex items-center justify-end">
+              <button
+                type="button"
+                onClick={() => setEventsCollapsed(true)}
+                className="text-xs font-medium text-slate-500 hover:text-slate-700 hover:underline"
+              >
+                {toggleEventsLabel}
+              </button>
+            </div>
+            <ul className="space-y-4">
+              {sortedDays.map((dayKey) => (
+                <li key={dayKey}>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">
+                    {formatDayHeader(eventsByDay[dayKey][0].start, zone)}
+                  </p>
+                  <ul className="space-y-1.5">
+                    {eventsByDay[dayKey].map((ev) => (
+                      <li
+                        key={ev.id}
+                        className="flex items-start gap-2 rounded-xl border border-amber-400/60 bg-gradient-to-r from-amber-100 to-amber-200/90 px-3 py-2.5 text-sm shadow-sm"
+                      >
+                        <span className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-amber-600" aria-hidden title="Busy" />
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-amber-950 truncate">{ev.summary}</p>
+                          <p className="text-xs text-amber-900/90 tabular-nums">
+                            <span className="font-semibold">Busy</span>
+                            {" · "}
+                            {formatEventTime(ev.start, ev.end, zone)}
+                          </p>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </li>
+              ))}
+            </ul>
+            <div className="flex items-center justify-end pt-1">
+              <button
+                type="button"
+                onClick={() => setEventsCollapsed(true)}
+                className="text-xs font-medium text-slate-500 hover:text-slate-700 hover:underline"
+              >
+                {toggleEventsLabel}
+              </button>
+            </div>
+          </>
         )}
         {derivedAvailabilityToday && derivedAvailabilityToday.length > 0 && (
           <div className="rounded-xl border border-emerald-200/80 bg-gradient-to-r from-emerald-50 to-teal-50/80 px-3 py-2.5">

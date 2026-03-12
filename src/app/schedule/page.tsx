@@ -320,14 +320,19 @@ export default function SchedulePage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10">
-          <div className="space-y-8">
+          <div className="space-y-12">
             {/* Step 1 — Connect calendar (first, prominent) */}
             <section aria-label="Connect your calendar" className="space-y-3">
-              <h2 className="text-base font-bold text-slate-900 tracking-tight">
-                Step 1 — Connect your Google Calendar
-              </h2>
-              <p className="text-sm text-slate-600 leading-relaxed">
-                Connect your calendar to automatically detect busy times and open gaps.
+              <div className="flex items-center gap-3">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white" aria-hidden>
+                  1
+                </span>
+                <h2 className="text-lg font-bold text-slate-900 tracking-tight">
+                  Connect your Google Calendar
+                </h2>
+              </div>
+              <p className="text-sm text-slate-600 leading-relaxed pl-11">
+                Connect once so we can detect your busy times and open slots—no manual entry needed.
               </p>
               <div className="rounded-2xl border-2 border-blue-200/70 bg-gradient-to-br from-blue-50/50 to-white shadow-md overflow-hidden">
                 <GoogleCalendarSection
@@ -339,12 +344,17 @@ export default function SchedulePage() {
             </section>
 
             {/* Step 2 — Find meeting time */}
-            <section aria-label="Find the best meeting time" className="space-y-3">
-              <h2 className="text-base font-bold text-slate-900 tracking-tight">
-                Step 2 — Find the best meeting time
-              </h2>
-              <p className="text-sm text-slate-600 leading-relaxed">
-                Enter time zones and working hours to find the best overlap.
+            <section aria-label="Find the best meeting time" className="space-y-3 pt-2">
+              <div className="flex items-center gap-3">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-700 text-sm font-bold text-white" aria-hidden>
+                  2
+                </span>
+                <h2 className="text-lg font-bold text-slate-900 tracking-tight">
+                  Find the best meeting time
+                </h2>
+              </div>
+              <p className="text-sm text-slate-600 leading-relaxed pl-11">
+                Add your time zone and theirs, plus working hours. We’ll suggest times that work for both.
               </p>
               <div className="rounded-2xl border border-slate-200/80 bg-surface-elevated overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 card-hover">
                 <div className="border-b border-slate-200/80 px-5 py-4 bg-gradient-to-r from-slate-50 to-white">
@@ -420,12 +430,17 @@ export default function SchedulePage() {
                 </p>
               ) : null}
             </section>
-            <section className="space-y-3" aria-label="Generate meeting prep">
-              <h2 className="text-base font-bold text-slate-900 tracking-tight">
-                Step 3 — Generate quick meeting prep
-              </h2>
-              <p className="text-sm text-slate-600 leading-relaxed">
-                Generate a quick meeting brief, interview prep, or talking points.
+            <section className="space-y-3 pt-2" aria-label="Generate meeting prep">
+              <div className="flex items-center gap-3">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-700 text-sm font-bold text-white" aria-hidden>
+                  3
+                </span>
+                <h2 className="text-lg font-bold text-slate-900 tracking-tight">
+                  Generate quick meeting prep
+                </h2>
+              </div>
+              <p className="text-sm text-slate-600 leading-relaxed pl-11">
+                Get a short brief, interview prep, or talking points so you’re ready for the call.
               </p>
               <PrepNotesPanel
                 notes={prepNotes}
