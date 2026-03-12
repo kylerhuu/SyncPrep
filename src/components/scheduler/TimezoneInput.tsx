@@ -89,6 +89,7 @@ export function TimezoneInput({
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
         autoComplete="off"
+        role="combobox"
         aria-autocomplete="list"
         aria-expanded={showDropdown}
         aria-controls="timezone-suggestions"

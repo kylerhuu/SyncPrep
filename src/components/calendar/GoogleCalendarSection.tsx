@@ -46,6 +46,7 @@ export function GoogleCalendarSection({
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [disconnecting, setDisconnecting] = useState(false);
+  const [eventsCollapsed, setEventsCollapsed] = useState(false);
 
   const fetchEvents = useCallback(async () => {
     setLoading(true);
@@ -144,8 +145,6 @@ export function GoogleCalendarSection({
       </Card>
     );
   }
-
-  const [eventsCollapsed, setEventsCollapsed] = useState(false);
 
   const eventsByDay = data.events.reduce<Record<string, CalendarEventItem[]>>((acc, ev) => {
     const dt = DateTime.fromISO(ev.start, { setZone: true }).setZone(zone);
