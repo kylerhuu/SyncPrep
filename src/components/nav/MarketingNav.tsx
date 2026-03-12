@@ -7,7 +7,7 @@ const primaryButtonClass =
 
 export function MarketingNav() {
   return (
-    <header className="border-b border-slate-200/80 bg-white/95 backdrop-blur-sm sticky top-0 z-10 shadow-sm">
+    <header className="border-b border-black/5 bg-white/60 backdrop-blur-[12px] sticky top-0 z-10">
       <nav className="max-w-6xl mx-auto px-5 py-3.5 sm:px-6 flex items-center justify-between">
         <Link
           href="/"

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { DateTime } from "luxon";
 import { buildGoogleCalendarUrl } from "@/lib/calendar";
-import { resolveTimezone } from "@/lib/timezone";
+import { resolveTimezone, getZoneDisplayName } from "@/lib/timezone";
 import type { OverlapSlotResult } from "@/lib/timezone";
 import { CheckCircleIcon } from "@/components/ui/Icons";
 import { CalendarIcon } from "@/components/ui/Icons";
@@ -22,33 +22,6 @@ function formatTimeRangeInZone(startISO: string, endISO: string, ianaZone: strin
   return `${start.toFormat("h:mm a")} – ${end.toFormat("h:mm a")}`;
 }
 
-/** IANA zone to human-readable name when Luxon returns an offset like +0000. */
-const ZONE_FRIENDLY_NAMES: Record<string, string> = {
-  UTC: "UTC",
-  "America/New_York": "Eastern",
-  "America/Los_Angeles": "Pacific",
-  "America/Chicago": "Central",
-  "America/Denver": "Mountain",
-  "Europe/London": "GMT/BST",
-  "Europe/Paris": "Central European",
-  "Asia/Tokyo": "Japan",
-  "Asia/Kolkata": "India",
-  "Australia/Sydney": "Australia Eastern",
-};
-
-function formatZoneDisplayName(ianaZone: string): string {
-  const friendly = ZONE_FRIENDLY_NAMES[ianaZone];
-  if (friendly) return friendly;
-  const dt = DateTime.now().setZone(ianaZone);
-  if (!dt.isValid) return ianaZone;
-  const abbr = dt.toFormat("ZZZ");
-  if (/[+-]\d{2}:?\d{2}/.test(abbr) || /^UTC/.test(abbr)) {
-    const region = ianaZone.split("/").pop()?.replace(/_/g, " ") ?? ianaZone;
-    return region;
-  }
-  return abbr;
-}
-
 export function SelectedMeetingCard({
   slot,
   zoneA,
@@ -60,8 +33,8 @@ export function SelectedMeetingCard({
   const tzB = resolveTimezone(zoneB);
   const timeRangeA = formatTimeRangeInZone(slot.startISO, slot.endISO, tzA);
   const timeRangeB = formatTimeRangeInZone(slot.startISO, slot.endISO, tzB);
-  const zoneLabelA = formatZoneDisplayName(tzA);
-  const zoneLabelB = formatZoneDisplayName(tzB);
+  const zoneLabelA = getZoneDisplayName(tzA);
+  const zoneLabelB = getZoneDisplayName(tzB);
   const url = buildGoogleCalendarUrl(slot.startISO, slot.endISO, title);
 
   return (
@@ -81,13 +54,13 @@ export function SelectedMeetingCard({
             <p className="text-xl font-bold text-slate-900 tabular-nums tracking-tight">
               {timeRangeA}
             </p>
-            <p className="text-sm text-slate-500 mt-0.5">{zoneLabelA} Time</p>
+            <p className="text-sm text-slate-500 mt-0.5">Your time ({zoneLabelA})</p>
           </div>
           <div>
             <p className="text-xl font-bold text-slate-900 tabular-nums tracking-tight">
               {timeRangeB}
             </p>
-            <p className="text-sm text-slate-500 mt-0.5">{zoneLabelB} Time</p>
+            <p className="text-sm text-slate-500 mt-0.5">Their time ({zoneLabelB})</p>
           </div>
         </div>
         <div className="border-t border-slate-200 pt-5 space-y-2">

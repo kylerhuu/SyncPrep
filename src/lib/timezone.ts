@@ -14,7 +14,22 @@
 import { DateTime } from "luxon";
 import type { TimeWindow, AvailabilityRange } from "@/types";
 
-/** Common city/region names → IANA time zone. User can also type IANA directly (e.g. America/New_York). */
+/** Abbreviation → IANA time zone. */
+const ABBREV_TO_TZ: Record<string, string> = {
+  pst: "America/Los_Angeles",
+  est: "America/New_York",
+  gmt: "Europe/London",
+  ict: "Asia/Bangkok",
+  kst: "Asia/Seoul",
+  jst: "Asia/Tokyo",
+  pdt: "America/Los_Angeles",
+  edt: "America/New_York",
+  cst: "America/Chicago",
+  mst: "America/Denver",
+  utc: "UTC",
+};
+
+/** City/region names → IANA time zone. */
 const CITY_TO_TZ: Record<string, string> = {
   "new york": "America/New_York",
   nyc: "America/New_York",
@@ -22,6 +37,7 @@ const CITY_TO_TZ: Record<string, string> = {
   la: "America/Los_Angeles",
   chicago: "America/Chicago",
   "san francisco": "America/Los_Angeles",
+  "san jose": "America/Los_Angeles",
   london: "Europe/London",
   paris: "Europe/Paris",
   berlin: "Europe/Berlin",
@@ -29,6 +45,8 @@ const CITY_TO_TZ: Record<string, string> = {
   singapore: "Asia/Singapore",
   sydney: "Australia/Sydney",
   "hong kong": "Asia/Hong_Kong",
+  bangkok: "Asia/Bangkok",
+  seoul: "Asia/Seoul",
   mumbai: "Asia/Kolkata",
   india: "Asia/Kolkata",
   "new delhi": "Asia/Kolkata",
@@ -36,14 +54,90 @@ const CITY_TO_TZ: Record<string, string> = {
   pacific: "America/Los_Angeles",
   central: "America/Chicago",
   mountain: "America/Denver",
-  utc: "UTC",
-  gmt: "UTC",
 };
 
+/** Human-readable zone names for display (e.g. "Pacific Time", "Asia/Bangkok"). */
+const ZONE_DISPLAY_NAMES: Record<string, string> = {
+  UTC: "UTC",
+  "America/New_York": "Eastern Time",
+  "America/Los_Angeles": "Pacific Time",
+  "America/Chicago": "Central Time",
+  "America/Denver": "Mountain Time",
+  "Europe/London": "GMT/BST",
+  "Europe/Paris": "Central European Time",
+  "Europe/Berlin": "Central European Time",
+  "Asia/Tokyo": "Japan Standard Time",
+  "Asia/Seoul": "Asia/Seoul",
+  "Asia/Bangkok": "Asia/Bangkok",
+  "Asia/Hong_Kong": "Asia/Hong_Kong",
+  "Asia/Singapore": "Asia/Singapore",
+  "Asia/Kolkata": "India Standard Time",
+  "Australia/Sydney": "Australia Eastern Time",
+};
+
+function toTitleCase(s: string): string {
+  return s.replace(/\w\S*/g, (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+}
+
+/** All timezone options for autocomplete: label (e.g. "San Francisco — America/Los_Angeles"), value (IANA). */
+let _suggestionsCache: { label: string; value: string }[] | null = null;
+
+function buildSuggestions(): { label: string; value: string }[] {
+  if (_suggestionsCache) return _suggestionsCache;
+  const list: { label: string; value: string }[] = [];
+  for (const [key, iana] of Object.entries(CITY_TO_TZ)) {
+    const label = toTitleCase(key.replace(/_/g, " "));
+    list.push({ label: `${label} — ${iana}`, value: iana });
+  }
+  for (const [key, iana] of Object.entries(ABBREV_TO_TZ)) {
+    list.push({ label: `${key.toUpperCase()} — ${iana}`, value: iana });
+  }
+  list.sort((a, b) => a.label.localeCompare(b.label));
+  _suggestionsCache = list;
+  return list;
+}
+
+/** Filter suggestions by query (matches label or value). */
+export function getTimezoneSuggestions(query: string): { label: string; value: string }[] {
+  const all = buildSuggestions();
+  const q = query.trim().toLowerCase();
+  if (!q) return all.slice(0, 12);
+  return all.filter(
+    (opt) =>
+      opt.label.toLowerCase().includes(q) ||
+      opt.value.toLowerCase().includes(q)
+  ).slice(0, 12);
+}
+
+/** Human-readable timezone label for UI (e.g. "Pacific Time", "Asia/Bangkok"). */
+export function getZoneDisplayName(ianaZone: string): string {
+  if (ZONE_DISPLAY_NAMES[ianaZone]) return ZONE_DISPLAY_NAMES[ianaZone];
+  const region = ianaZone.split("/").pop()?.replace(/_/g, " ") ?? ianaZone;
+  return ianaZone.includes("/") ? ianaZone : region;
+}
+
+function isValidIANA(zone: string): boolean {
+  if (!zone.trim()) return false;
+  return DateTime.now().setZone(zone.trim()).isValid;
+}
+
+/**
+ * Resolve user input to an IANA timezone string.
+ * 1. Normalize (trim, lowercase for lookups).
+ * 2. Check abbreviation alias map (PST, EST, ICT, etc.).
+ * 3. Check if input is a valid IANA timezone.
+ * 4. Check city-to-timezone map.
+ * 5. Return resolved IANA or raw input (caller can validate with isValidZone).
+ */
 export function resolveTimezone(input: string): string {
   if (!input.trim()) return "UTC";
-  const key = input.trim().toLowerCase();
-  return CITY_TO_TZ[key] ?? input.trim();
+  const trimmed = input.trim();
+  const key = trimmed.toLowerCase();
+
+  if (ABBREV_TO_TZ[key]) return ABBREV_TO_TZ[key];
+  if (CITY_TO_TZ[key]) return CITY_TO_TZ[key];
+  if (isValidIANA(trimmed)) return trimmed;
+  return trimmed;
 }
 
 /** Returns true if the string is a valid IANA time zone (Luxon can parse it). */

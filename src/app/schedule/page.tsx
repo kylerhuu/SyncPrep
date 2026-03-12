@@ -87,7 +87,11 @@ export default function SchedulePage() {
   const [prepError, setPrepError] = useState<string | null>(null);
 
   useEffect(() => {
-    setZoneA(loadJson(STORAGE_KEYS.zoneA, ""));
+    const storedA = loadJson(STORAGE_KEYS.zoneA, "");
+    const detected = typeof Intl !== "undefined" && Intl.DateTimeFormat
+      ? Intl.DateTimeFormat().resolvedOptions().timeZone
+      : "";
+    setZoneA(storedA || detected);
     setZoneB(loadJson(STORAGE_KEYS.zoneB, ""));
     const loadedA = loadJson<TimeWindow>(STORAGE_KEYS.workingHoursA, defaultWindow);
     const loadedB = loadJson<TimeWindow>(STORAGE_KEYS.workingHoursB, defaultWindow);
@@ -171,11 +175,11 @@ export default function SchedulePage() {
       canCompute,
       errorZoneA:
         zoneA.trim() && !zoneAValid
-          ? "Time zone not found. Try e.g. New York or America/New_York"
+          ? "Couldn't find that time zone. Try a city like Bangkok, an abbreviation like PST, or a full zone like America/Los_Angeles."
           : undefined,
       errorZoneB:
         zoneB.trim() && !zoneBValid
-          ? "Time zone not found. Try e.g. London or Europe/London"
+          ? "Couldn't find that time zone. Try a city like Bangkok, an abbreviation like PST, or a full zone like America/Los_Angeles."
           : undefined,
     };
   }, [zoneA, zoneB, workingHoursA, workingHoursB]);

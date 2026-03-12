@@ -1,6 +1,6 @@
 "use client";
 
-import { Input } from "@/components/ui/Input";
+import { TimezoneInput } from "@/components/scheduler/TimezoneInput";
 
 interface TimezoneFieldsProps {
   zoneA: string;
@@ -21,18 +21,18 @@ export function TimezoneFields({
 }: TimezoneFieldsProps) {
   return (
     <div className="space-y-4">
-      <Input
+      <TimezoneInput
         label="Your time zone (or city)"
         value={zoneA}
-        onChange={(e) => onZoneAChange(e.target.value)}
-        placeholder="e.g. America/New_York or New York"
+        onChange={onZoneAChange}
+        placeholder="e.g. San Francisco, PST, or America/Los_Angeles"
         error={errorZoneA}
       />
-      <Input
+      <TimezoneInput
         label="Other person's time zone (or city)"
         value={zoneB}
-        onChange={(e) => onZoneBChange(e.target.value)}
-        placeholder="e.g. Europe/London or London"
+        onChange={onZoneBChange}
+        placeholder="e.g. Bangkok, EST, or Europe/London"
         error={errorZoneB}
       />
     </div>

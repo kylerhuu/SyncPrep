@@ -2,25 +2,9 @@
 
 import { DateTime } from "luxon";
 import type { OverlapSlotResult } from "@/lib/timezone";
-import { resolveTimezone } from "@/lib/timezone";
+import { resolveTimezone, getZoneDisplayName } from "@/lib/timezone";
 import { Card } from "@/components/ui/Card";
 import { ClockIcon, CheckCircleIcon } from "@/components/ui/Icons";
-
-const ZONE_FRIENDLY_NAMES: Record<string, string> = {
-  "America/New_York": "Eastern",
-  "America/Los_Angeles": "Pacific",
-  "America/Chicago": "Central",
-  "America/Denver": "Mountain",
-  "Europe/London": "GMT/BST",
-  "Europe/Paris": "Central European",
-  "Asia/Tokyo": "Japan",
-  "Asia/Kolkata": "India",
-  "Australia/Sydney": "Australia Eastern",
-};
-
-function formatZoneLabel(ianaZone: string): string {
-  return ZONE_FRIENDLY_NAMES[ianaZone] ?? ianaZone.split("/").pop()?.replace(/_/g, " ") ?? ianaZone;
-}
 
 function formatSlotInZone(startISO: string, endISO: string, ianaZone: string): string {
   const start = DateTime.fromISO(startISO, { setZone: true }).setZone(ianaZone);
@@ -81,8 +65,8 @@ export function OverlapResults({
 
   const tzA = resolveTimezone(zoneA);
   const tzB = resolveTimezone(zoneB);
-  const labelA = formatZoneLabel(tzA);
-  const labelB = formatZoneLabel(tzB);
+  const labelA = getZoneDisplayName(tzA);
+  const labelB = getZoneDisplayName(tzB);
   const sortedSlots = [...suggestedSlots].sort((a, b) =>
     a.startISO.localeCompare(b.startISO)
   );
@@ -112,9 +96,9 @@ export function OverlapResults({
                 )}
                 <div className="tabular-nums min-w-0">
                   <div className="font-semibold text-slate-900">{lineA}</div>
-                  <div className="text-slate-500 font-normal text-xs mt-0.5">{labelA} Time</div>
+                  <div className="text-slate-500 font-normal text-xs mt-0.5">Your time ({labelA})</div>
                   <div className="font-semibold text-slate-900 mt-2">{lineB}</div>
-                  <div className="text-slate-500 font-normal text-xs mt-0.5">{labelB} Time</div>
+                  <div className="text-slate-500 font-normal text-xs mt-0.5">Their time ({labelB})</div>
                 </div>
                 {isSelected && (
                   <span className="shrink-0 mt-0.5 [&_svg]:text-[var(--accent-blue)]" aria-hidden>
