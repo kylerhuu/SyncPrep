@@ -1,89 +1,135 @@
 import Link from "next/link";
-import { MarketingNav } from "@/components/nav/MarketingNav";
 
 export default function PrivacyPage() {
   return (
-    <div className="min-h-screen flex flex-col bg-app-canvas">
-      <MarketingNav />
+    <div className="min-h-screen bg-white">
+      <main className="mx-auto max-w-[780px] px-5 py-12 sm:px-6">
+        <Link
+          href="/"
+          className="inline-block text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors mb-8"
+        >
+          ← Back to home
+        </Link>
 
-      <main className="flex-1 max-w-2xl w-full mx-auto px-5 py-12 sm:px-6 relative">
-        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-          Privacy
+        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+          Privacy Policy
         </h1>
         <p className="mt-2 text-sm text-slate-500">
-          Last updated: March 2025
+          Last updated: March 2026
         </p>
 
-        <div className="mt-10 space-y-8 text-sm text-slate-600 leading-relaxed rounded-2xl border border-slate-200/80 bg-surface-elevated p-8 shadow-sm">
+        <div className="mt-10 space-y-10 text-slate-600 leading-relaxed">
           <section>
-            <h2 className="text-base font-semibold text-slate-900 mb-2">
-              Overview
+            <h2 className="text-lg font-semibold text-slate-900 mb-3">
+              Introduction
             </h2>
             <p>
-              SyncPrep helps you schedule meetings and prepare for them. We
-              access only what we need to provide that service.
+              SyncPrep helps you find overlapping meeting times across time zones and prepare for meetings. You can connect your Google Calendar so we can see when you’re busy, and you can optionally provide a resume, job description, or meeting context so we can generate prep insights using AI. This policy explains what information we access, how we use it, and how we work with third-party services.
             </p>
           </section>
 
           <section>
-            <h2 className="text-base font-semibold text-slate-900 mb-2">
+            <h2 className="text-lg font-semibold text-slate-900 mb-3">
+              Information we access
+            </h2>
+            <p>
+              We only access information that is necessary to run the product:
+            </p>
+            <ul className="mt-3 list-disc list-inside space-y-2 pl-1">
+              <li><strong>Google Calendar</strong> — If you connect your calendar, we read your events to understand your availability.</li>
+              <li><strong>User-provided materials</strong> — Anything you type or paste into SyncPrep, such as meeting context, resume text, or job descriptions, when you use the prep or scheduling features.</li>
+            </ul>
+          </section>
+
+          <section>
+            <h2 className="text-lg font-semibold text-slate-900 mb-3">
               Google Calendar
             </h2>
             <p>
-              If you connect Google Calendar, we request <strong>read-only</strong> access
-              to your events. We use this to:
+              If you connect Google Calendar, we use <strong>read-only</strong> access to your events. We use this solely to identify when you are busy and when you have open slots. We do not create, edit, or delete any calendar events. We do not permanently store your Google Calendar data on our servers; we use it to compute availability and show it to you in the app. You can disconnect your calendar at any time.
             </p>
-            <ul className="mt-2 list-disc list-inside space-y-1 pl-2">
-              <li>Show your busy times so you can see when you’re available</li>
-              <li>Calculate open slots for meeting scheduling</li>
-              <li>Display a weekly schedule view</li>
+          </section>
+
+          <section>
+            <h2 className="text-lg font-semibold text-slate-900 mb-3">
+              User-provided materials
+            </h2>
+            <p>
+              When you enter or paste text such as a resume, job description, or meeting context, we use it to generate prep insights (for example, talking points or interview prep). This text may be sent to and processed by third-party AI services so we can return the generated content to you. We do not use this content for training our own models or for purposes unrelated to providing you the service.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-lg font-semibold text-slate-900 mb-3">
+              How we use information
+            </h2>
+            <p>
+              We use the information above only to provide SyncPrep’s features: calculating availability, suggesting meeting times, and generating prep content. We do not sell your personal information. We do not use your data for advertising or to build profiles about you for third parties.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-lg font-semibold text-slate-900 mb-3">
+              Third-party services
+            </h2>
+            <p>
+              SyncPrep relies on:
+            </p>
+            <ul className="mt-3 list-disc list-inside space-y-2 pl-1">
+              <li><strong>Google APIs</strong> — For calendar access when you choose to connect. Use of Google Calendar is subject to Google’s Privacy Policy.</li>
+              <li><strong>AI services</strong> — To generate meeting prep and similar content. Text you provide may be sent to these providers to produce the output you see. Their use of data is governed by their own policies.</li>
             </ul>
-            <p className="mt-3">
-              We do <strong>not</strong> create, edit, or delete calendar events.
-              You can disconnect at any time.
+          </section>
+
+          <section>
+            <h2 className="text-lg font-semibold text-slate-900 mb-3">
+              Data storage and security
+            </h2>
+            <p>
+              We do not permanently store your Google Calendar data. Session data such as your time zone and selected meeting slot may be kept in your browser (e.g. session storage). No internet transmission or storage is completely secure; we take reasonable steps to protect the data we handle.
             </p>
           </section>
 
           <section>
-            <h2 className="text-base font-semibold text-slate-900 mb-2">
-              Meeting brief (AI prep)
+            <h2 className="text-lg font-semibold text-slate-900 mb-3">
+              Children’s privacy
             </h2>
             <p>
-              When you generate a meeting brief, we send your meeting type,
-              context, resume, and job description to our AI provider (OpenAI) to
-              produce prep notes. This data is not stored on our servers; it’s
-              used only to generate your brief.
+              SyncPrep is not directed at children under 13. We do not knowingly collect personal information from children under 13. If you believe a child has provided us with personal information, please contact us and we will take steps to delete it.
             </p>
           </section>
 
           <section>
-            <h2 className="text-base font-semibold text-slate-900 mb-2">
-              Local storage
+            <h2 className="text-lg font-semibold text-slate-900 mb-3">
+              Changes to this policy
             </h2>
             <p>
-              Schedule preferences, selected meeting times, and prep notes are
-              stored in your browser’s session storage. Nothing is saved to our
-              servers beyond what’s needed for calendar sync and AI generation.
+              We may update this privacy policy from time to time. We will post the updated version on this page and update the “Last updated” date. Continued use of SyncPrep after changes means you accept the updated policy.
             </p>
           </section>
 
           <section>
-            <h2 className="text-base font-semibold text-slate-900 mb-2">
-              Questions
+            <h2 className="text-lg font-semibold text-slate-900 mb-3">
+              Contact
             </h2>
             <p>
-              If you have questions about how we handle your data, you can reach
-              out through the app or repository.
+              If you have questions about this privacy policy or how we handle your data, contact us at{" "}
+              <a
+                href="mailto:syncprepapp@gmail.com"
+                className="text-slate-900 font-medium underline hover:no-underline"
+              >
+                syncprepapp@gmail.com
+              </a>.
             </p>
           </section>
         </div>
 
-        <div className="mt-12 pt-8 border-t border-slate-200">
+        <div className="mt-14 pt-8 border-t border-slate-200">
           <Link
-            href="/schedule"
-            className="text-sm font-medium text-slate-600 hover:text-slate-900"
+            href="/"
+            className="text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors"
           >
-            ← Back to Schedule
+            ← Back to home
           </Link>
         </div>
       </main>
