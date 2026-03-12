@@ -176,7 +176,7 @@ export function GoogleCalendarSection({
                   {eventsByDay[dayKey].map((ev) => (
                     <li
                       key={ev.id}
-                      className="flex items-start gap-2 rounded-lg border border-amber-400 bg-amber-200 px-3 py-2 text-sm"
+                      className="flex items-start gap-2 rounded-xl border border-amber-400/60 bg-gradient-to-r from-amber-100 to-amber-200/90 px-3 py-2.5 text-sm shadow-sm"
                     >
                       <span className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-amber-600" aria-hidden title="Busy" />
                       <div className="min-w-0 flex-1">
@@ -195,7 +195,7 @@ export function GoogleCalendarSection({
           </ul>
         )}
         {derivedAvailabilityToday && derivedAvailabilityToday.length > 0 && (
-          <div className="rounded-lg border border-slate-200 bg-slate-50/50 px-3 py-2.5">
+          <div className="rounded-xl border border-emerald-200/80 bg-gradient-to-r from-emerald-50 to-teal-50/80 px-3 py-2.5">
             <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
               Available today
             </p>

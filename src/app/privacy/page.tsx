@@ -3,10 +3,10 @@ import { MarketingNav } from "@/components/nav/MarketingNav";
 
 export default function PrivacyPage() {
   return (
-    <div className="min-h-screen flex flex-col bg-[var(--background)]">
+    <div className="min-h-screen flex flex-col bg-app-canvas">
       <MarketingNav />
 
-      <main className="flex-1 max-w-2xl w-full mx-auto px-5 py-12 sm:px-6">
+      <main className="flex-1 max-w-2xl w-full mx-auto px-5 py-12 sm:px-6 relative">
         <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
           Privacy
         </h1>
@@ -14,7 +14,7 @@ export default function PrivacyPage() {
           Last updated: March 2025
         </p>
 
-        <div className="mt-10 space-y-8 text-sm text-slate-600 leading-relaxed">
+        <div className="mt-10 space-y-8 text-sm text-slate-600 leading-relaxed rounded-2xl border border-slate-200/80 bg-surface-elevated p-8 shadow-sm">
           <section>
             <h2 className="text-base font-semibold text-slate-900 mb-2">
               Overview

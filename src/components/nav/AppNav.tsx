@@ -4,18 +4,18 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const navLinkClass =
-  "text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors";
+  "text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors duration-200";
 const navLinkActiveClass = "text-slate-900 font-semibold";
 
 export function AppNav() {
   const pathname = usePathname();
 
   return (
-    <header className="border-b border-slate-200 bg-white sticky top-0 z-10">
+    <header className="border-b border-slate-200/80 bg-white/95 backdrop-blur-sm sticky top-0 z-10 shadow-sm">
       <nav className="max-w-6xl mx-auto px-5 py-3.5 sm:px-6 flex items-center justify-between">
         <Link
           href="/schedule"
-          className="text-lg font-semibold tracking-tight text-slate-900 hover:text-slate-700"
+          className="text-lg font-bold tracking-tight text-slate-900 hover:text-slate-700 transition-colors"
         >
           SyncPrep
         </Link>

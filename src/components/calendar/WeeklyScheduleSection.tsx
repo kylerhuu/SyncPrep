@@ -125,7 +125,7 @@ export function WeeklyScheduleSection({
         </Link>
       </div>
       {!userTimeZone.trim() ? (
-        <div className="rounded-2xl border border-slate-200 bg-slate-50/50 px-5 py-8 text-center">
+        <div className="rounded-2xl border-2 border-slate-200 bg-surface-elevated px-5 py-8 text-center">
           <p className="text-sm text-slate-600">
             Set your time zone above to see your week.
           </p>
@@ -142,18 +142,18 @@ export function WeeklyScheduleSection({
             zone={iana}
             compact={compact}
           />
-          <div className="flex flex-wrap gap-5 text-xs text-slate-600 bg-slate-50/80 rounded-xl px-4 py-3 border border-slate-200/80">
+          <div className="flex flex-wrap gap-6 text-xs text-slate-600 bg-surface-elevated rounded-xl px-5 py-3.5 border border-slate-200/80 shadow-sm">
             <span className="flex items-center gap-2">
-              <span className="h-3.5 w-3.5 rounded-md border border-amber-600 bg-amber-300 shrink-0" />
-              <span className="font-medium text-slate-700">Busy</span>
+              <span className="h-4 w-4 rounded-lg bg-gradient-to-br from-amber-300 to-amber-400 border border-amber-500/50 shrink-0 shadow-sm" />
+              <span className="font-semibold text-slate-700">Busy</span>
             </span>
             <span className="flex items-center gap-2">
-              <span className="h-3.5 w-3.5 rounded-md border border-emerald-600 bg-emerald-300 shrink-0" />
-              <span className="font-medium text-slate-700">Available</span>
+              <span className="h-4 w-4 rounded-lg bg-gradient-to-br from-emerald-300 to-teal-300 border border-emerald-500/50 shrink-0 shadow-sm" />
+              <span className="font-semibold text-slate-700">Available</span>
             </span>
             <span className="flex items-center gap-2">
-              <span className="h-3.5 w-3.5 rounded-md border-2 border-blue-700 bg-blue-500 shrink-0" />
-              <span className="font-medium text-slate-700">Selected meeting</span>
+              <span className="h-4 w-4 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 shrink-0 shadow-md ring-1 ring-blue-400/50" />
+              <span className="font-semibold text-slate-700">Selected meeting</span>
             </span>
           </div>
         </>

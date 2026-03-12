@@ -48,13 +48,13 @@ function blockToStyle(
 
 const blockStyles = {
   busy:
-    "bg-amber-300 border border-amber-600 text-amber-950 shadow-sm",
+    "bg-gradient-to-br from-amber-300 via-amber-200 to-orange-200 border border-amber-500/60 text-amber-950 shadow-[0_2px_8px_-1px_rgba(245,158,11,0.4)] transition-all duration-300",
   free:
-    "bg-emerald-300/90 border border-emerald-600 text-emerald-900 shadow-sm",
+    "bg-gradient-to-br from-emerald-300/95 via-teal-200 to-cyan-200/90 border border-emerald-500/50 text-emerald-950 shadow-[0_2px_8px_-1px_rgba(16,185,129,0.25)] transition-all duration-300",
   selected:
-    "bg-blue-500 border-2 border-blue-700 text-white shadow-md ring-2 ring-blue-400/40",
+    "bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-700 text-white border-0 shadow-[0_6px_20px_-4px_rgba(37,99,235,0.55),0_0_0_1px_rgba(255,255,255,0.2)_inset] ring-2 ring-blue-400/60 selected-glow transition-all duration-300",
   suggestion:
-    "bg-teal-200 border border-teal-500 text-teal-900",
+    "bg-gradient-to-br from-cyan-200/90 to-blue-200/80 border border-cyan-400/60 text-cyan-950 shadow-[0_2px_8px_-1px_rgba(6,182,212,0.25)] transition-all duration-300",
 } as const;
 
 const DAY_HEADER_HEIGHT = 36;
@@ -90,8 +90,8 @@ export function WeekViewTimeline({
   const hourLabelClass = compact ? "text-[10px]" : "text-xs";
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-      <div className="border-b border-slate-200 bg-slate-50/80 px-5 py-3.5">
+    <div className="rounded-2xl border border-slate-200/80 bg-surface-elevated overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 card-hover">
+      <div className="border-b border-slate-200/80 bg-gradient-to-r from-slate-50 via-white to-slate-50 px-5 py-3.5">
         <p className="text-sm font-semibold text-slate-800 tracking-tight">
           {weekLabel}
         </p>
@@ -139,7 +139,7 @@ export function WeekViewTimeline({
                 )}
               </div>
               <div
-                className="relative flex-1 bg-slate-50/30"
+                className="relative flex-1 bg-gradient-to-b from-slate-50 to-slate-100/50"
                 style={{ height: totalHeight, minHeight: totalHeight }}
               >
                 {hours.map((h) => (
@@ -155,7 +155,7 @@ export function WeekViewTimeline({
                 {positionedByDay[dayIndex]?.map(({ block, top, height }, i) => (
                   <div
                     key={i}
-                    className={`absolute left-1 right-1 rounded-lg flex flex-col justify-center overflow-hidden ${blockStyles[block.type]}`}
+                    className={`absolute left-1.5 right-1.5 rounded-xl flex flex-col justify-center overflow-hidden ${blockStyles[block.type]}`}
                     style={{ top: top + 2, height: Math.max(height - 4, 8) }}
                     title={block.label}
                   >

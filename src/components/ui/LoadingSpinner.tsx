@@ -17,7 +17,7 @@ export function LoadingSpinner({
       aria-label={label ?? "Loading"}
     >
       <span
-        className={`inline-block ${sizeClass} shrink-0 animate-spin rounded-full border-2 border-slate-200 border-t-blue-600`}
+        className={`inline-block ${sizeClass} shrink-0 animate-spin rounded-full border-2 border-slate-200/80 border-t-[var(--accent-blue)]`}
         aria-hidden
       />
       {label && (

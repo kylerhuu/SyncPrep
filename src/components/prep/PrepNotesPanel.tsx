@@ -54,9 +54,12 @@ export function PrepNotesPanel({
 
   if (loading) {
     return (
-      <Card title="Meeting brief" icon={<DocumentTextIcon />}>
-        <div className="py-5">
-          <LoadingSpinner label="Generating meeting brief…" size="md" />
+      <Card title="Meeting brief" icon={<DocumentTextIcon />} variant="ai">
+        <div className="py-8">
+          <div className="flex flex-col items-center gap-4">
+            <LoadingSpinner label="Generating meeting brief…" size="md" />
+            <p className="text-xs text-slate-500">AI is preparing your talking points and questions…</p>
+          </div>
         </div>
       </Card>
     );
@@ -64,7 +67,7 @@ export function PrepNotesPanel({
 
   if (error) {
     return (
-      <Card title="Meeting brief" icon={<DocumentTextIcon />}>
+      <Card title="Meeting brief" icon={<DocumentTextIcon />} variant="ai">
         <div className="space-y-4">
           <p className="text-sm text-red-700 leading-relaxed">{error}</p>
           {onRetry && (
@@ -85,7 +88,7 @@ export function PrepNotesPanel({
       onJobDescriptionChange &&
       onGenerate;
     return (
-      <Card title="Meeting brief" icon={<DocumentTextIcon />}>
+      <Card title="Meeting brief" icon={<DocumentTextIcon />} variant="ai">
         <div className="space-y-0">
           {hasFormHandlers ? (
             <>
@@ -104,7 +107,7 @@ export function PrepNotesPanel({
                 <Button
                   onClick={onGenerate}
                   disabled={loading}
-                  className="w-full sm:min-w-[240px] sm:w-auto min-h-[44px] px-6 py-3.5 text-sm font-semibold hover:bg-blue-700 hover:shadow-lg active:bg-blue-800 transition-all inline-flex items-center justify-center gap-2 [&_svg]:text-white"
+                  className="w-full sm:min-w-[260px] sm:w-auto min-h-[48px] px-6 py-3.5 text-sm font-bold transition-all duration-300 inline-flex items-center justify-center gap-2.5 shadow-xl shadow-blue-500/20 hover:shadow-blue-500/30 hover:-translate-y-0.5 [&_svg]:text-white"
                 >
                   <SparklesIcon />
                   Generate meeting brief
@@ -124,7 +127,7 @@ export function PrepNotesPanel({
             </>
           ) : (
             <div className="space-y-4">
-              <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50/30 px-4 py-4">
+              <div className="rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/50 px-4 py-4">
                 <p className="text-sm font-medium text-slate-700 mb-1">
                   Get your meeting brief
                 </p>
@@ -150,7 +153,7 @@ export function PrepNotesPanel({
     <button
       type="button"
       onClick={handleCopy}
-      className="inline-flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 transition-colors"
+      className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 focus-visible:ring-offset-1 transition-all duration-200 hover:-translate-y-0.5"
     >
       <ClipboardIcon />
       {copied ? "Copied!" : "Copy notes"}
@@ -162,6 +165,7 @@ export function PrepNotesPanel({
       title="Meeting brief"
       icon={<DocumentTextIcon />}
       headerAction={copyButton}
+      variant="ai"
     >
       <PrepBriefBody notes={notes} />
     </Card>

@@ -52,6 +52,16 @@ function formatSummaryContent(text: string) {
   );
 }
 
+const sectionColors: Record<string, string> = {
+  "Meeting overview": "text-blue-600 [&_svg]:text-blue-500",
+  "Key talking points": "text-indigo-600 [&_svg]:text-indigo-500",
+  "Likely interview questions": "text-violet-600 [&_svg]:text-violet-500",
+  "Strengths to highlight": "text-amber-600 [&_svg]:text-amber-500",
+  "Skills or topics to review": "text-cyan-600 [&_svg]:text-cyan-500",
+  "Gaps or missing qualifications": "text-rose-600 [&_svg]:text-rose-500",
+  "Follow-up questions to ask": "text-emerald-600 [&_svg]:text-emerald-500",
+};
+
 function SectionBlock({
   title,
   icon,
@@ -65,6 +75,7 @@ function SectionBlock({
   single?: boolean;
   isLast?: boolean;
 }) {
+  const accentClass = sectionColors[title] ?? "text-slate-600 [&_svg]:text-slate-500";
   const content = single
     ? (typeof items === "string" ? items : items?.[0] ?? "")
     : items;
@@ -81,32 +92,34 @@ function SectionBlock({
     if (!formatted) return null;
     return (
       <div
-        className={`py-3 ${!isLast ? "border-b border-slate-100" : ""}`}
+        className={`py-4 ${!isLast ? "border-b border-slate-100" : ""} transition-colors duration-200`}
       >
-        <div className="flex items-center gap-2 mb-2">
+        <div className={`flex items-center gap-2.5 mb-2.5 ${accentClass}`}>
           {icon}
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+          <h3 className="text-xs font-bold uppercase tracking-wider">
             {title}
           </h3>
         </div>
-        <div className="pl-6 text-slate-800">{formatted}</div>
+        <div className="pl-6 pr-2 py-2 text-slate-800 rounded-r-lg border-l-2 border-blue-200/80 bg-blue-50/20 -mx-1">
+          {formatted}
+        </div>
       </div>
     );
   }
   const list = Array.isArray(content) ? content : [];
   if (list.length === 0) return null;
   return (
-    <div className={`py-3 ${!isLast ? "border-b border-slate-100" : ""}`}>
-      <div className="flex items-center gap-2 mb-2">
+    <div className={`py-4 ${!isLast ? "border-b border-slate-100" : ""} transition-colors duration-200`}>
+      <div className={`flex items-center gap-2.5 mb-2.5 ${accentClass}`}>
         {icon}
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+        <h3 className="text-xs font-bold uppercase tracking-wider">
           {title}
         </h3>
       </div>
-      <ul className="pl-6 space-y-1.5 text-sm text-slate-800 leading-relaxed list-none">
+      <ul className="pl-7 space-y-1.5 text-sm text-slate-800 leading-relaxed list-none">
         {list.map((item, i) => (
-          <li key={i} className="flex gap-2">
-            <span className="text-slate-400 shrink-0">•</span>
+          <li key={i} className="flex gap-2.5">
+            <span className="text-blue-500 shrink-0 font-semibold">•</span>
             <span>{item}</span>
           </li>
         ))}

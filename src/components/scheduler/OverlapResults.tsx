@@ -90,9 +90,10 @@ export function OverlapResults({
   return (
     <Card title="Best overlapping times" icon={<ClockIcon />}>
       <p className="text-sm text-slate-600 mb-4">Select one:</p>
-      <ul className="space-y-2.5">
-        {sortedSlots.map((slot) => {
+      <ul className="space-y-3">
+        {sortedSlots.map((slot, idx) => {
           const isSelected = selectedSlot?.startISO === slot.startISO;
+          const isRecommended = idx === 0;
           const lineA = formatSlotInZone(slot.startISO, slot.endISO, tzA);
           const lineB = formatSlotInZone(slot.startISO, slot.endISO, tzB);
           return (
@@ -100,12 +101,15 @@ export function OverlapResults({
               <button
                 type="button"
                 onClick={() => onSelectSlot(isSelected ? null : slot)}
-                className={`w-full text-left rounded-xl border-2 px-4 py-3.5 text-sm font-medium transition-all flex items-start justify-between gap-3 ${
+                className={`w-full text-left rounded-xl border-2 px-4 py-3.5 text-sm font-medium transition-all duration-300 flex items-start justify-between gap-3 relative overflow-hidden ${
                   isSelected
-                    ? "border-blue-600 bg-blue-50 text-blue-900 shadow-md shadow-blue-200/50 ring-2 ring-blue-500/30"
-                    : "border-slate-200 bg-white hover:border-slate-400 hover:bg-slate-50 text-slate-800"
-                }`}
+                    ? "border-blue-500 bg-gradient-to-br from-blue-50 via-indigo-50 to-blue-50 text-slate-900 shadow-[0_8px_24px_-6px_rgba(37,99,235,0.35)] ring-2 ring-blue-400/50"
+                    : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/95 text-slate-800 hover:shadow-lg hover:-translate-y-0.5"
+                } ${isRecommended && !isSelected ? "border-l-4 border-l-cyan-500" : ""}`}
               >
+                {isRecommended && (
+                  <span className="absolute top-2 right-2 text-[10px] font-semibold uppercase tracking-wider text-cyan-600/80">Best</span>
+                )}
                 <div className="tabular-nums min-w-0">
                   <div className="font-semibold text-slate-900">{lineA}</div>
                   <div className="text-slate-500 font-normal text-xs mt-0.5">{labelA} Time</div>
@@ -113,7 +117,7 @@ export function OverlapResults({
                   <div className="text-slate-500 font-normal text-xs mt-0.5">{labelB} Time</div>
                 </div>
                 {isSelected && (
-                  <span className="shrink-0 mt-0.5 [&_svg]:text-blue-600" aria-hidden>
+                  <span className="shrink-0 mt-0.5 [&_svg]:text-[var(--accent-blue)]" aria-hidden>
                     <CheckCircleIcon />
                   </span>
                 )}

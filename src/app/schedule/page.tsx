@@ -302,15 +302,15 @@ export default function SchedulePage() {
   }, [meetingType, context, resume, jobDescription]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-[var(--background)]">
+    <div className="min-h-screen flex flex-col bg-app-canvas">
       <AppNav />
 
-      <main className="flex-1 max-w-6xl w-full mx-auto px-5 py-8 sm:px-6">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+      <main className="flex-1 max-w-6xl w-full mx-auto px-5 py-8 sm:px-6 relative">
+        <div className="mb-10">
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
             Schedule & prepare
           </h1>
-          <p className="mt-1.5 text-sm text-slate-500 leading-relaxed">
+          <p className="mt-2 text-sm text-slate-600 leading-relaxed">
             Schedule across time zones and prepare better meetings.
           </p>
         </div>
@@ -328,8 +328,8 @@ export default function SchedulePage() {
               <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-3">
                 Step 1 — Find a meeting time
               </p>
-              <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-                <div className="border-b border-slate-200/80 px-5 py-4 bg-slate-50/95">
+              <div className="rounded-2xl border border-slate-200/80 bg-surface-elevated overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 card-hover">
+                <div className="border-b border-slate-200/80 px-5 py-4 bg-gradient-to-r from-slate-50 to-white">
                   <h2 className="text-sm font-semibold tracking-tight text-slate-800">
                     Time zones & availability
                   </h2>
@@ -394,7 +394,7 @@ export default function SchedulePage() {
                   title="Meeting"
                 />
               ) : allSlots.length > 0 ? (
-                <p className="text-sm text-slate-500 text-center py-5 rounded-2xl border border-dashed border-slate-200 bg-slate-50/50">
+                <p className="text-sm text-slate-500 text-center py-6 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/90">
                   Select a time to see your meeting summary and add to calendar.
                 </p>
               ) : null}
@@ -423,7 +423,7 @@ export default function SchedulePage() {
               <p className="text-sm text-slate-600">
                 <Link
                   href="/prep"
-                  className="font-medium text-blue-600 hover:text-blue-700 hover:underline"
+                  className="font-semibold text-[var(--accent-blue)] hover:text-blue-700 hover:underline transition-colors"
                 >
                   View full brief →
                 </Link>

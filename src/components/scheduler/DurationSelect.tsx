@@ -29,8 +29,8 @@ export function DurationSelect({
         onChange={(e) =>
           onChange(Number(e.target.value) as MeetingDurationMinutes)
         }
-        className={`w-full min-h-[40px] rounded-xl border px-3.5 py-2.5 text-sm text-slate-900 transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/25 ${
-          error ? "border-red-400 focus:border-red-500 focus:ring-red-500/20" : "border-slate-200"
+        className={`w-full min-h-[40px] rounded-xl border-2 px-3.5 py-2.5 text-sm text-slate-900 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 ${
+          error ? "border-red-400 focus:border-red-500 focus:ring-red-500/25" : "border-slate-200 hover:border-slate-300"
         }`}
         aria-invalid={!!error}
         aria-describedby={error ? "duration-error" : undefined}

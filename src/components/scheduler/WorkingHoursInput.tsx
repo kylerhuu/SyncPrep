@@ -11,7 +11,7 @@ interface WorkingHoursInputProps {
 }
 
 const inputClass =
-  "min-h-[40px] rounded-xl border px-3.5 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/25 border-slate-200";
+  "min-h-[40px] rounded-xl border-2 px-3.5 py-2.5 text-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 border-slate-200 hover:border-slate-300";
 
 export function WorkingHoursInput({
   value,
@@ -37,7 +37,7 @@ export function WorkingHoursInput({
           type="time"
           value={value.end}
           onChange={(e) => onChange({ ...value, end: e.target.value })}
-          className={`${inputClass} ${!valid ? "border-red-400 focus:ring-red-500/20" : ""}`}
+          className={`${inputClass} ${!valid ? "border-red-400 focus:ring-red-500/25" : ""}`}
           aria-invalid={!valid}
         />
       </div>

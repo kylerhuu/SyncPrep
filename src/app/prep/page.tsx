@@ -47,7 +47,7 @@ export default function PrepResultsPage() {
     <button
       type="button"
       onClick={handleCopy}
-      className="inline-flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 transition-colors"
+      className="inline-flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 focus-visible:ring-offset-1 transition-all duration-200"
     >
       <ClipboardIcon />
       {copied ? "Copied!" : "Copy notes"}
@@ -55,7 +55,7 @@ export default function PrepResultsPage() {
   ) : null;
 
   return (
-    <div className="min-h-screen flex flex-col bg-[var(--background)]">
+    <div className="min-h-screen flex flex-col bg-app-canvas">
       <AppNav />
 
       <main className="flex-1 max-w-4xl w-full mx-auto px-5 py-8 sm:px-6">
@@ -69,11 +69,11 @@ export default function PrepResultsPage() {
         </div>
 
         {!hasCheckedStorage ? (
-          <Card title="Meeting brief" icon={<DocumentTextIcon />}>
+          <Card title="Meeting brief" icon={<DocumentTextIcon />} variant="ai">
             <p className="text-sm text-slate-500">Loading meeting brief…</p>
           </Card>
         ) : !notes ? (
-          <Card title="No meeting brief yet">
+          <Card title="No meeting brief yet" variant="ai">
             <p className="text-sm text-slate-600 mb-4 leading-relaxed">
               Generate your meeting brief on the Schedule page, then return here
               to view it. You can also see the brief on Schedule after you click
@@ -88,6 +88,7 @@ export default function PrepResultsPage() {
             title="Meeting brief"
             icon={<DocumentTextIcon />}
             headerAction={copyButton}
+            variant="ai"
           >
             <PrepBriefBody notes={notes} />
           </Card>

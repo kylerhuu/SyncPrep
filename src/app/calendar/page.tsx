@@ -183,7 +183,7 @@ export default function CalendarPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col bg-[var(--background)]">
+      <div className="min-h-screen flex flex-col bg-app-canvas">
         <AppNav />
         <main className="flex-1 max-w-5xl w-full mx-auto px-5 py-8">
           <div className="py-12">
@@ -195,7 +195,7 @@ export default function CalendarPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[var(--background)]">
+    <div className="min-h-screen flex flex-col bg-app-canvas">
       <AppNav />
 
       <main className="flex-1 max-w-5xl w-full mx-auto px-5 py-8">
@@ -209,19 +209,19 @@ export default function CalendarPage() {
         </div>
 
         {!connected ? (
-          <div className="rounded-xl border border-slate-200 bg-slate-50/50 px-5 py-8 text-center">
+          <div className="rounded-2xl border-2 border-slate-200 bg-surface-elevated px-5 py-8 text-center">
             <p className="text-sm text-slate-600 mb-4">
               Connect Google Calendar on the Schedule page to see your week here.
             </p>
             <Link
               href="/schedule"
-              className="inline-flex items-center justify-center rounded-lg bg-slate-900 text-white text-sm font-medium px-4 py-2.5 hover:bg-slate-800"
+              className="inline-flex items-center justify-center rounded-xl bg-[var(--accent-navy)] text-white text-sm font-semibold px-5 py-2.5 shadow-lg shadow-slate-900/10 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200"
             >
               Go to Schedule
             </Link>
           </div>
         ) : !zone.trim() ? (
-          <div className="rounded-2xl border border-slate-200 bg-slate-50/50 px-5 py-8 text-center">
+          <div className="rounded-2xl border-2 border-slate-200 bg-surface-elevated px-5 py-8 text-center">
             <p className="text-sm text-slate-600">
               Set your time zone on Schedule to see your week.
             </p>
@@ -237,18 +237,18 @@ export default function CalendarPage() {
               blocks={blocks}
               zone={iana}
             />
-            <div className="mt-6 flex flex-wrap gap-5 text-xs text-slate-600 bg-slate-50/80 rounded-xl px-4 py-3 border border-slate-200/80 max-w-md">
+            <div className="mt-6 flex flex-wrap gap-6 text-xs text-slate-600 bg-surface-elevated rounded-xl px-5 py-3.5 border border-slate-200/80 max-w-md shadow-sm">
               <span className="flex items-center gap-2">
-                <span className="h-3.5 w-3.5 rounded-md border border-amber-600 bg-amber-300 shrink-0" />
-                <span className="font-medium text-slate-700">Busy</span>
+                <span className="h-4 w-4 rounded-lg bg-gradient-to-br from-amber-300 to-amber-400 border border-amber-500/50 shrink-0 shadow-sm" />
+                <span className="font-semibold text-slate-700">Busy</span>
               </span>
               <span className="flex items-center gap-2">
-                <span className="h-3.5 w-3.5 rounded-md border border-emerald-600 bg-emerald-300 shrink-0" />
-                <span className="font-medium text-slate-700">Available</span>
+                <span className="h-4 w-4 rounded-lg bg-gradient-to-br from-emerald-300 to-teal-300 border border-emerald-500/50 shrink-0 shadow-sm" />
+                <span className="font-semibold text-slate-700">Available</span>
               </span>
               <span className="flex items-center gap-2">
-                <span className="h-3.5 w-3.5 rounded-md border-2 border-blue-700 bg-blue-500 shrink-0" />
-                <span className="font-medium text-slate-700">Selected meeting</span>
+                <span className="h-4 w-4 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 shrink-0 shadow-md ring-1 ring-blue-400/50" />
+                <span className="font-semibold text-slate-700">Selected meeting</span>
               </span>
             </div>
           </>
