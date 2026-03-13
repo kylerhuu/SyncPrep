@@ -4,18 +4,23 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { DateTime } from "luxon";
 import {
-  findOverlappingSlotsFromRanges,
+  getAvailabilityByDaySingleUser,
+  getAvailabilityByDayWithManualOther,
   getBestSuggestions,
   isValidZone,
   resolveTimezone,
+  toValidBusyBlocks,
   validateTimeWindow,
   windowsToUtcRanges,
   workingHoursMinusBusy,
   MEETING_DURATIONS,
+  type DayAvailability,
   type MeetingDurationMinutes,
   type OverlapSlotResult,
 } from "@/lib/timezone";
-import type { MeetingType, PrepNotes, TimeWindow } from "@/types";
+import { rankMutualSlots } from "@/lib/slot-ranking";
+import type { MeetingType, PrepNotes, TimeWindow, WeeklyPattern } from "@/types";
+import type { OtherPersonWindow } from "@/types";
 import type { CalendarEventItem } from "@/types/calendar";
 import { TimezoneFields } from "@/components/scheduler/TimezoneFields";
 import { WorkingHoursInput } from "@/components/scheduler/WorkingHoursInput";
@@ -25,6 +30,7 @@ import { SelectedMeetingCard } from "@/components/scheduler/SelectedMeetingCard"
 import { PrepNotesPanel } from "@/components/prep/PrepNotesPanel";
 import { GoogleCalendarSection } from "@/components/calendar/GoogleCalendarSection";
 import { WeeklyScheduleSection } from "@/components/calendar/WeeklyScheduleSection";
+import { OtherPersonAvailabilitySection } from "@/components/scheduler/OtherPersonAvailabilitySection";
 import { AppNav } from "@/components/nav/AppNav";
 import { AppFooter } from "@/components/nav/AppFooter";
 
@@ -33,13 +39,33 @@ const STORAGE_KEYS = {
   zoneB: "syncprep_zoneB",
   workingHoursA: "syncprep_workingHoursA",
   workingHoursB: "syncprep_workingHoursB",
+  otherPersonWindows: "syncprep_otherPersonWindows",
   duration: "syncprep_duration",
   meetingType: "syncprep_meetingType",
   context: "syncprep_context",
   resume: "syncprep_resume",
   jobDescription: "syncprep_jobDescription",
   selectedSlot: "syncprep_selectedSlot",
+  weeklyPattern: "syncprep_weeklyPattern",
 };
+
+/** Ensure each window has an id (for React keys); add if missing. */
+function normalizeOtherPersonWindows(
+  raw: unknown
+): OtherPersonWindow[] {
+  if (!Array.isArray(raw)) return [];
+  const scheduleDates = new Set<string>();
+  return raw
+    .filter((w): w is Record<string, unknown> => w && typeof w === "object")
+    .map((w, i) => {
+      const date = typeof w.date === "string" ? w.date : "";
+      const start = typeof w.start === "string" ? w.start : "09:00";
+      const end = typeof w.end === "string" ? w.end : "17:00";
+      const id = typeof w.id === "string" ? w.id : `win-${i}-${Date.now()}`;
+      return { id, date, start, end };
+    })
+    .filter((w) => w.date && w.start && w.end);
+}
 
 function loadJson<T>(key: string, fallback: T): T {
   if (typeof window === "undefined") return fallback;
@@ -63,6 +89,16 @@ function saveJson(key: string, value: unknown) {
 
 const defaultWindow: TimeWindow = { start: "09:00", end: "17:00" };
 
+const emptyWeeklyPattern: WeeklyPattern = {
+  Sunday: [],
+  Monday: [],
+  Tuesday: [],
+  Wednesday: [],
+  Thursday: [],
+  Friday: [],
+  Saturday: [],
+};
+
 function isValidDuration(n: number): n is MeetingDurationMinutes {
   return MEETING_DURATIONS.includes(n as MeetingDurationMinutes);
 }
@@ -85,6 +121,8 @@ export default function SchedulePage() {
   const [prepNotes, setPrepNotes] = useState<PrepNotes | null>(null);
   const [prepLoading, setPrepLoading] = useState(false);
   const [prepError, setPrepError] = useState<string | null>(null);
+  const [otherPersonWindows, setOtherPersonWindows] = useState<OtherPersonWindow[]>([]);
+  const [weeklyPattern, setWeeklyPattern] = useState<WeeklyPattern>(emptyWeeklyPattern);
 
   useEffect(() => {
     const storedA = loadJson(STORAGE_KEYS.zoneA, "");
@@ -122,6 +160,23 @@ export default function SchedulePage() {
     ) {
       setSelectedSlot(saved as OverlapSlotResult);
     }
+    const rawWindows = loadJson<unknown>(STORAGE_KEYS.otherPersonWindows, []);
+    setOtherPersonWindows(normalizeOtherPersonWindows(rawWindows));
+    const storedPattern = loadJson<Partial<WeeklyPattern> | null>(
+      STORAGE_KEYS.weeklyPattern,
+      null
+    );
+    if (storedPattern && typeof storedPattern === "object") {
+      setWeeklyPattern((prev) => ({
+        Sunday: Array.isArray(storedPattern.Sunday) ? storedPattern.Sunday : prev.Sunday,
+        Monday: Array.isArray(storedPattern.Monday) ? storedPattern.Monday : prev.Monday,
+        Tuesday: Array.isArray(storedPattern.Tuesday) ? storedPattern.Tuesday : prev.Tuesday,
+        Wednesday: Array.isArray(storedPattern.Wednesday) ? storedPattern.Wednesday : prev.Wednesday,
+        Thursday: Array.isArray(storedPattern.Thursday) ? storedPattern.Thursday : prev.Thursday,
+        Friday: Array.isArray(storedPattern.Friday) ? storedPattern.Friday : prev.Friday,
+        Saturday: Array.isArray(storedPattern.Saturday) ? storedPattern.Saturday : prev.Saturday,
+      }));
+    }
   }, []);
 
   const onCalendarChange = useCallback((connected: boolean, events: CalendarEventItem[]) => {
@@ -134,104 +189,178 @@ export default function SchedulePage() {
     saveJson(STORAGE_KEYS.zoneB, zoneB);
     saveJson(STORAGE_KEYS.workingHoursA, workingHoursA);
     saveJson(STORAGE_KEYS.workingHoursB, workingHoursB);
+    saveJson(
+      STORAGE_KEYS.otherPersonWindows,
+      otherPersonWindows.map(({ id: _id, ...rest }) => rest)
+    );
     saveJson(STORAGE_KEYS.duration, duration);
     saveJson(STORAGE_KEYS.meetingType, meetingType);
     saveJson(STORAGE_KEYS.context, context);
     saveJson(STORAGE_KEYS.resume, resume);
     saveJson(STORAGE_KEYS.jobDescription, jobDescription);
     saveJson(STORAGE_KEYS.selectedSlot, selectedSlot);
+    saveJson(STORAGE_KEYS.weeklyPattern, weeklyPattern);
   }, [
     zoneA,
     zoneB,
     workingHoursA,
     workingHoursB,
+    otherPersonWindows,
     duration,
     meetingType,
     context,
     resume,
     jobDescription,
     selectedSlot,
+    weeklyPattern,
   ]);
 
   const refDate = useMemo(() => DateTime.now(), []);
+  const [selectedDay, setSelectedDay] = useState<string | null>(null);
 
   const validation = useMemo(() => {
     const zoneAValid = !zoneA.trim() || isValidZone(zoneA);
-    const zoneBValid = !zoneB.trim() || isValidZone(zoneB);
     const validWorkingHoursA = validateTimeWindow(workingHoursA).valid;
-    const validWorkingHoursB = validateTimeWindow(workingHoursB).valid;
-    const hasZones = zoneA.trim() !== "" && zoneB.trim() !== "";
-    const canCompute: boolean =
-      hasZones &&
-      zoneAValid &&
-      zoneBValid &&
-      validWorkingHoursA &&
-      validWorkingHoursB;
+    const hasZoneAndHours = zoneA.trim() !== "" && validWorkingHoursA;
+    const canCompute = hasZoneAndHours && zoneAValid;
     return {
       zoneAValid,
-      zoneBValid,
       validWorkingHoursA,
-      validWorkingHoursB,
       canCompute,
       errorZoneA:
         zoneA.trim() && !zoneAValid
           ? "Couldn't find that time zone. Try a city like Bangkok, an abbreviation like PST, or a full zone like America/Los_Angeles."
           : undefined,
-      errorZoneB:
-        zoneB.trim() && !zoneBValid
-          ? "Couldn't find that time zone. Try a city like Bangkok, an abbreviation like PST, or a full zone like America/Los_Angeles."
-          : undefined,
     };
-  }, [zoneA, zoneB, workingHoursA, workingHoursB]);
+  }, [zoneA, workingHoursA]);
 
-  const allSlots = useMemo(() => {
+  /** Next 7 days for the "other person" day dropdown (and overlap scheduling). */
+  const scheduleDays = useMemo(() => {
+    const tz =
+      zoneA.trim() !== ""
+        ? resolveTimezone(zoneA)
+        : typeof Intl !== "undefined" && Intl.DateTimeFormat
+          ? Intl.DateTimeFormat().resolvedOptions().timeZone
+          : "UTC";
+    const today = refDate.setZone(tz).startOf("day");
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = today.plus({ days: i });
+      return {
+        date: d.toFormat("yyyy-MM-dd"),
+        label:
+          i === 0 ? "Today" : i === 1 ? "Tomorrow" : d.toFormat("EEE MMM d"),
+      };
+    });
+  }, [refDate, zoneA]);
+
+  /** Calendar events as busy blocks (validated); empty when not connected or on API failure. */
+  const busyBlocksFromCalendar = useMemo(
+    () =>
+      calendarConnected
+        ? toValidBusyBlocks(
+            calendarEvents.map((e) => ({ start: e.start, end: e.end }))
+          )
+        : [],
+    [calendarConnected, calendarEvents]
+  );
+
+  const useTwoPersonOverlap =
+    otherPersonWindows.length > 0 &&
+    zoneB.trim() !== "" &&
+    isValidZone(zoneB);
+
+  const availabilityByDay = useMemo((): DayAvailability[] => {
     if (!validation.canCompute) return [];
-    const rangesB = windowsToUtcRanges(zoneB, [workingHoursB], refDate);
-    let rangesA: { startISO: string; endISO: string }[];
-    if (calendarConnected) {
-      rangesA = workingHoursMinusBusy(
+    if (useTwoPersonOverlap) {
+      return getAvailabilityByDayWithManualOther(
         zoneA,
         [workingHoursA],
-        calendarEvents.map((e) => ({ start: e.start, end: e.end })),
-        refDate
+        busyBlocksFromCalendar,
+        duration,
+        refDate,
+        otherPersonWindows.map(({ id: _id, ...w }) => w),
+        zoneB,
+        weeklyPattern
       );
-    } else {
-      rangesA = windowsToUtcRanges(zoneA, [workingHoursA], refDate);
     }
-    return findOverlappingSlotsFromRanges(
-      rangesA,
-      rangesB,
+    return getAvailabilityByDaySingleUser(
       zoneA,
-      zoneB,
-      duration
+      [workingHoursA],
+      busyBlocksFromCalendar,
+      duration,
+      refDate
     );
   }, [
     validation.canCompute,
     zoneA,
     zoneB,
     workingHoursA,
-    workingHoursB,
-    calendarConnected,
-    calendarEvents,
+    busyBlocksFromCalendar,
     refDate,
     duration,
+    useTwoPersonOverlap,
+    otherPersonWindows,
+    weeklyPattern,
   ]);
-  const suggestedSlots = useMemo(() => getBestSuggestions(allSlots), [allSlots]);
+
+  const allSlots = useMemo(
+    () => availabilityByDay.flatMap((d) => d.slots),
+    [availabilityByDay]
+  );
+
+  const selectedDaySlots = useMemo(() => {
+    if (!selectedDay) return [];
+    const day = availabilityByDay.find((d) => d.date === selectedDay);
+    return day?.slots ?? [];
+  }, [availabilityByDay, selectedDay]);
+
+  const suggestedSlots = useMemo(
+    () => getBestSuggestions(selectedDaySlots),
+    [selectedDaySlots]
+  );
+
+  /** Ranked slots for the selected day (two-person mode only). Used for Recommended vs All UI. */
+  const rankedSlotsForSelectedDay = useMemo(() => {
+    if (!useTwoPersonOverlap || selectedDaySlots.length === 0) return undefined;
+    return rankMutualSlots(selectedDaySlots, zoneA, refDate);
+  }, [useTwoPersonOverlap, selectedDaySlots, zoneA, refDate]);
+
+  useEffect(() => {
+    if (availabilityByDay.length === 0) {
+      setSelectedDay(null);
+      return;
+    }
+    const dates = new Set(availabilityByDay.map((d) => d.date));
+    if (selectedDay === null || !dates.has(selectedDay)) {
+      setSelectedDay(availabilityByDay[0].date);
+    }
+  }, [availabilityByDay, selectedDay]);
+
+  /** Migrate other-person windows with dates outside the current 7-day range to the first day. */
+  useEffect(() => {
+    if (scheduleDays.length === 0 || otherPersonWindows.length === 0) return;
+    const validDates = new Set(scheduleDays.map((d) => d.date));
+    const firstDate = scheduleDays[0].date;
+    const needsMigration = otherPersonWindows.some((w) => !validDates.has(w.date));
+    if (!needsMigration) return;
+    setOtherPersonWindows((prev) =>
+      prev.map((w) =>
+        validDates.has(w.date) ? w : { ...w, date: firstDate }
+      )
+    );
+  }, [scheduleDays, otherPersonWindows]);
 
   /** Today's availability in user's timezone (for calendar section). */
   const derivedAvailabilityToday = useMemo(() => {
     if (!zoneA.trim() || !validation.validWorkingHoursA) return [];
-    let ranges: { startISO: string; endISO: string }[];
-    if (calendarConnected) {
-      ranges = workingHoursMinusBusy(
-        zoneA,
-        [workingHoursA],
-        calendarEvents.map((e) => ({ start: e.start, end: e.end })),
-        refDate
-      );
-    } else {
-      ranges = windowsToUtcRanges(zoneA, [workingHoursA], refDate);
-    }
+    const ranges = calendarConnected
+      ? workingHoursMinusBusy(
+          zoneA,
+          [workingHoursA],
+          busyBlocksFromCalendar,
+          refDate
+        )
+      : windowsToUtcRanges(zoneA, [workingHoursA], refDate);
     const tz = resolveTimezone(zoneA);
     return ranges.map((r) => {
       const start = DateTime.fromISO(r.startISO, { setZone: true }).setZone(tz);
@@ -243,7 +372,7 @@ export default function SchedulePage() {
     validation.validWorkingHoursA,
     workingHoursA,
     calendarConnected,
-    calendarEvents,
+    busyBlocksFromCalendar,
     refDate,
   ]);
 
@@ -257,10 +386,10 @@ export default function SchedulePage() {
     if (!stillValid) setSelectedSlot(null);
   }, [validation.canCompute, allSlots, selectedSlot]);
 
-  const hasValidInputNoOverlap: boolean =
+  const hasValidInputNoOverlap =
     validation.canCompute && allSlots.length === 0;
-  const showInputPrompt: boolean =
-    !validation.canCompute || (zoneA.trim() === "" && zoneB.trim() === "");
+  const showInputPrompt =
+    !validation.canCompute || zoneA.trim() === "";
 
   const generatePrep = useCallback(async () => {
     setPrepError(null);
@@ -354,12 +483,12 @@ export default function SchedulePage() {
                 </h2>
               </div>
               <p className="text-sm text-slate-600 leading-relaxed pl-11">
-                Add your time zone and theirs, plus working hours. We’ll suggest times that work for both.
+                Set your time zone and working hours to see your free slots for the next 7 days.
               </p>
               <div className="rounded-2xl border border-slate-200/80 bg-surface-elevated overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 card-hover">
                 <div className="border-b border-slate-200/80 px-5 py-4 bg-gradient-to-r from-slate-50 to-white">
                   <h3 className="text-sm font-semibold tracking-tight text-slate-800">
-                    Time zones & working hours
+                    Your time zone & working hours
                   </h3>
                 </div>
                 <div className="p-5 space-y-6">
@@ -369,7 +498,8 @@ export default function SchedulePage() {
                     onZoneAChange={setZoneA}
                     onZoneBChange={setZoneB}
                     errorZoneA={validation.errorZoneA}
-                    errorZoneB={validation.errorZoneB}
+                    errorZoneB={undefined}
+                    singleUser
                   />
                   <DurationSelect
                     value={duration}
@@ -385,13 +515,20 @@ export default function SchedulePage() {
                         : "When you're generally available. Connect your calendar above to use your real busy and free times."
                     }
                   />
-                  <WorkingHoursInput
-                    value={workingHoursB}
-                    onChange={setWorkingHoursB}
-                    label="Other person's working hours"
-                  />
                 </div>
               </div>
+            </section>
+
+            <section aria-label="Other person's availability" className="pt-2">
+              <OtherPersonAvailabilitySection
+                scheduleDays={scheduleDays}
+                zoneB={zoneB}
+                onZoneBChange={setZoneB}
+                windows={otherPersonWindows}
+                onWindowsChange={setOtherPersonWindows}
+                weeklyPattern={weeklyPattern}
+                onWeeklyPatternChange={setWeeklyPattern}
+              />
             </section>
 
             <WeeklyScheduleSection
@@ -404,14 +541,61 @@ export default function SchedulePage() {
           </div>
 
           <div className="space-y-7 lg:min-w-0">
-            <section className="space-y-1" aria-label="Available times">
+            <section
+              className="space-y-4"
+              aria-label={useTwoPersonOverlap ? "Mutual availability" : "Available times"}
+            >
+              {validation.canCompute && availabilityByDay.length > 0 && (
+                <div
+                  className="flex flex-wrap gap-2 sm:gap-2.5 pb-1 -mx-0.5"
+                  role="tablist"
+                  aria-label="Choose day"
+                >
+                  {availabilityByDay.map((day) => {
+                    const isSelected = selectedDay === day.date;
+                    return (
+                      <button
+                        key={day.date}
+                        type="button"
+                        role="tab"
+                        aria-selected={isSelected}
+                        onClick={() => setSelectedDay(day.date)}
+                        className={`
+                          rounded-xl border-2 px-3.5 py-2.5 text-sm font-medium transition-all duration-200 shrink-0
+                          focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2
+                          ${isSelected
+                            ? "border-blue-500 bg-blue-500 text-white shadow-md shadow-blue-500/25"
+                            : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50"
+                          }
+                        `}
+                      >
+                        <span className="block truncate max-w-[7rem] sm:max-w-none">
+                          {day.label}
+                        </span>
+                        {day.slots.length > 0 && (
+                          <span
+                            className={`ml-1.5 font-normal tabular-nums ${
+                              isSelected ? "text-blue-100" : "text-slate-500"
+                            }`}
+                          >
+                            ({day.slots.length})
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
               <OverlapResults
                 allSlots={allSlots}
+                slotsForSelectedDay={selectedDaySlots}
                 suggestedSlots={suggestedSlots}
+                rankedSlotsForSelectedDay={rankedSlotsForSelectedDay}
                 selectedSlot={selectedSlot}
                 onSelectSlot={setSelectedSlot}
                 zoneA={zoneA}
-                zoneB={zoneB}
+                zoneB={useTwoPersonOverlap ? zoneB : undefined}
+                singleUser={!useTwoPersonOverlap}
                 hasValidInputNoOverlap={hasValidInputNoOverlap}
                 showInputPrompt={showInputPrompt}
               />
@@ -421,12 +605,13 @@ export default function SchedulePage() {
                 <SelectedMeetingCard
                   slot={selectedSlot}
                   zoneA={zoneA}
-                  zoneB={zoneB}
+                  zoneB={useTwoPersonOverlap ? zoneB : undefined}
                   title="Meeting"
+                  singleUser={!useTwoPersonOverlap}
                 />
               ) : allSlots.length > 0 ? (
                 <p className="text-sm text-slate-500 text-center py-6 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/90">
-                  Select a time to see your meeting summary and add to calendar.
+                  Select a time to add it to your calendar.
                 </p>
               ) : null}
             </section>

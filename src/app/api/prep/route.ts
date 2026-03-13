@@ -38,6 +38,8 @@ export async function POST(request: Request) {
     context?: string;
     resume?: string;
     jobDescription?: string;
+    meetingTitle?: string;
+    calendarDescription?: string;
   };
   try {
     body = await request.json();
@@ -48,7 +50,10 @@ export async function POST(request: Request) {
   const meetingType = body.meetingType ?? "other";
   const parts: string[] = [
     `Meeting type: ${meetingType}.`,
+    body.meetingTitle?.trim() && `Meeting title: ${body.meetingTitle.trim()}`,
     body.context?.trim() && `Meeting goal or context: ${body.context.trim()}`,
+    body.calendarDescription?.trim() &&
+      `Calendar description or agenda:\n${body.calendarDescription.trim()}`,
     body.resume?.trim() && `Resume (paste):\n${body.resume.trim()}`,
     body.jobDescription?.trim() &&
       `Job description (paste):\n${body.jobDescription.trim()}`,

@@ -6,7 +6,8 @@
 import { EncryptJWT, jwtDecrypt } from "jose";
 
 const COOKIE_NAME = "syncprep_google_tokens";
-const SCOPE = "https://www.googleapis.com/auth/calendar.events.readonly";
+// Allow reading existing events and creating new ones on the user's calendar.
+const SCOPE = "https://www.googleapis.com/auth/calendar.events";
 
 export interface GoogleTokens {
   access_token: string;

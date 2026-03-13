@@ -12,7 +12,7 @@
  */
 
 import { DateTime } from "luxon";
-import type { TimeWindow, AvailabilityRange } from "@/types";
+import type { TimeWindow, AvailabilityRange, WeeklyPattern } from "@/types";
 
 /** Abbreviation → IANA time zone. */
 const ABBREV_TO_TZ: Record<string, string> = {
@@ -214,6 +214,27 @@ export interface BusyBlock {
 }
 
 /**
+ * Normalize and filter busy blocks for scheduling: keep only blocks with valid
+ * ISO start/end where start < end. Skips malformed or missing dates (e.g. from
+ * API failures or all-day events that might be date-only). Safe for empty input.
+ */
+export function toValidBusyBlocks(
+  blocks: { start?: string; end?: string }[]
+): BusyBlock[] {
+  const result: BusyBlock[] = [];
+  for (const b of blocks) {
+    const start = typeof b.start === "string" ? b.start.trim() : "";
+    const end = typeof b.end === "string" ? b.end.trim() : "";
+    if (!start || !end) continue;
+    const startDt = DateTime.fromISO(start, { setZone: true });
+    const endDt = DateTime.fromISO(end, { setZone: true });
+    if (!startDt.isValid || !endDt.isValid || startDt >= endDt) continue;
+    result.push({ start, end });
+  }
+  return result;
+}
+
+/**
  * Compute availability = working hours minus busy blocks (imported calendar events).
  *
  * Algorithm:
@@ -240,13 +261,17 @@ export function workingHoursMinusBusy(
   const workingRanges = windowsToUtcRanges(zone, workingHours, refDate);
   if (workingRanges.length === 0) return [];
 
-  const busyInDay = busyBlocks
-    .map((b) => ({
-      start: DateTime.fromISO(b.start, { setZone: true }).toUTC(),
-      end: DateTime.fromISO(b.end, { setZone: true }).toUTC(),
-    }))
-    .filter((b) => b.end > dayStartUtc && b.start < dayEndUtc)
-    .sort((a, b) => a.start.valueOf() - b.start.valueOf());
+  const busyInDay: { start: DateTime; end: DateTime }[] = [];
+  for (const b of busyBlocks) {
+    const start = DateTime.fromISO(b.start, { setZone: true });
+    const end = DateTime.fromISO(b.end, { setZone: true });
+    if (!start.isValid || !end.isValid || start >= end) continue;
+    const startUtc = start.toUTC();
+    const endUtc = end.toUTC();
+    if (endUtc <= dayStartUtc || startUtc >= dayEndUtc) continue;
+    busyInDay.push({ start: startUtc, end: endUtc });
+  }
+  busyInDay.sort((a, b) => a.start.valueOf() - b.start.valueOf());
 
   const gaps: AvailabilityRange[] = [];
   for (const block of workingRanges) {
@@ -284,13 +309,18 @@ export interface OverlapSlotResult {
 }
 
 /**
- * Find overlapping meeting slots from two lists of UTC availability ranges.
+ * Find overlapping (mutual) meeting slots from two lists of UTC availability ranges.
  *
- * Overlap flow (used by schedule page):
- * 1. User (A): rangesA = working hours minus imported calendar busy (or plain working hours if no calendar).
- * 2. Other (B): rangesB = working hours converted to UTC for ref day.
- * 3. For each pair (rangeA, rangeB), overlap = [max(startA, startB), min(endA, endB)]; step by duration to emit slots.
- * 4. Dedupe by startISO, sort chronologically; suggestions = top N.
+ * Overlap algorithm (timezone-safe):
+ * - All inputs are already in UTC (rangesA, rangesB have startISO/endISO in UTC).
+ * - For each pair (rangeA, rangeB): overlap = [max(startA, startB), min(endA, endB)].
+ *   If overlap is non-empty, step through it by meeting duration to emit slots.
+ * - Partial overlaps (e.g. your 9–11, their 10–12) yield slots only in 10–11.
+ * - Multiple windows on the same day: each range in rangesB is compared with each
+ *   in rangesA, so multiple windows are handled correctly.
+ * - Slots are deduped by startISO and sorted. Labels are formatted in zoneA for display.
+ *
+ * Used for two-person scheduling: my free slots (rangesA) vs their availability (rangesB).
  */
 export function findOverlappingSlotsFromRanges(
   rangesA: AvailabilityRange[],
@@ -306,17 +336,20 @@ export function findOverlappingSlotsFromRanges(
   for (const ra of rangesA) {
     const startA = DateTime.fromISO(ra.startISO, { setZone: true });
     const endA = DateTime.fromISO(ra.endISO, { setZone: true });
+    if (!startA.isValid || !endA.isValid) continue;
     for (const rb of rangesB) {
       const startB = DateTime.fromISO(rb.startISO, { setZone: true });
       const endB = DateTime.fromISO(rb.endISO, { setZone: true });
+      if (!startB.isValid || !endB.isValid) continue;
       const start = DateTime.max(startA, startB);
       const end = DateTime.min(endA, endB);
       if (start >= end) continue;
       let cursor = start;
       while (cursor.plus(duration).valueOf() <= end.valueOf()) {
         const slotEnd = cursor.plus(duration);
-        const startISO = cursor.toISO()!;
-        const endISO = slotEnd.toISO()!;
+        const startISO = cursor.toISO();
+        const endISO = slotEnd.toISO();
+        if (!startISO || !endISO) break;
         slots.push({
           start: startISO,
           end: endISO,
@@ -367,6 +400,372 @@ export function getBestSuggestions(
   n: number = 5
 ): OverlapSlotResult[] {
   return slots.slice(0, n);
+}
+
+/**
+ * Convert one set of availability ranges (UTC) into bookable slots by stepping
+ * through each range at the given duration. Used for single-user scheduling:
+ * "when am I free?" without overlapping with another person's schedule.
+ */
+export function availabilityRangesToSlots(
+  ranges: AvailabilityRange[],
+  zone: string,
+  durationMinutes: number = 60
+): OverlapSlotResult[] {
+  const tz = resolveTimezone(zone);
+  const slots: OverlapSlotResult[] = [];
+  const duration = { minutes: durationMinutes };
+
+  for (const r of ranges) {
+    const start = DateTime.fromISO(r.startISO, { setZone: true });
+    const end = DateTime.fromISO(r.endISO, { setZone: true });
+    if (!start.isValid || !end.isValid || start >= end) continue;
+    let cursor = start;
+    while (cursor.plus(duration).valueOf() <= end.valueOf()) {
+      const slotEnd = cursor.plus(duration);
+      const startISO = cursor.toISO();
+      const endISO = slotEnd.toISO();
+      if (!startISO || !endISO) break;
+      slots.push({
+        start: startISO,
+        end: endISO,
+        label: `${cursor.setZone(tz).toFormat("h:mm a")} – ${slotEnd.setZone(tz).toFormat("h:mm a")}`,
+        startISO,
+        endISO,
+      });
+      cursor = slotEnd;
+    }
+  }
+
+  const seen = new Set<string>();
+  const unique = slots.filter((s) => {
+    if (seen.has(s.startISO)) return false;
+    seen.add(s.startISO);
+    return true;
+  });
+  unique.sort((a, b) => a.startISO.localeCompare(b.startISO));
+  return unique;
+}
+
+/**
+ * Single-user availability: next 7 days of free slots from working hours minus
+ * calendar busy. No second timezone or overlap with another person. Use this
+ * for "my availability" only.
+ */
+export function getAvailabilityByDaySingleUser(
+  zone: string,
+  workingHours: TimeWindow[],
+  busyBlocks: BusyBlock[],
+  durationMinutes: number,
+  refDate: DateTime = DateTime.now()
+): DayAvailability[] {
+  const todayInZone = refDate.setZone(resolveTimezone(zone)).startOf("day");
+  const nowUtc = refDate.toUTC();
+  const result: DayAvailability[] = [];
+
+  for (let i = 0; i < AVAILABILITY_DAYS_AHEAD; i++) {
+    const dayStart = todayInZone.plus({ days: i });
+    const dateKey = dayStart.toFormat("yyyy-MM-dd");
+    const label =
+      i === 0 ? "Today" : i === 1 ? "Tomorrow" : dayStart.toFormat("EEE MMM d");
+
+    let ranges: AvailabilityRange[];
+    if (busyBlocks.length > 0) {
+      ranges = workingHoursMinusBusy(zone, workingHours, busyBlocks, dayStart);
+    } else {
+      ranges = windowsToUtcRanges(zone, workingHours, dayStart);
+    }
+
+    if (i === 0) {
+      ranges = clipRangesToMinStart(ranges, nowUtc);
+    }
+
+    const slots = availabilityRangesToSlots(ranges, zone, durationMinutes);
+    result.push({ date: dateKey, label, slots });
+  }
+
+  return result;
+}
+
+/**
+ * Clip availability ranges so none start before minStartUtc (e.g. "now" for today).
+ * Used to avoid showing past slots on the current day. Ranges entirely in the
+ * past are dropped; partially past ranges are clipped to minStartUtc.
+ */
+function clipRangesToMinStart(
+  ranges: AvailabilityRange[],
+  minStartUtc: DateTime
+): AvailabilityRange[] {
+  const out: AvailabilityRange[] = [];
+  for (const r of ranges) {
+    const start = DateTime.fromISO(r.startISO, { setZone: true });
+    const end = DateTime.fromISO(r.endISO, { setZone: true });
+    if (!start.isValid || !end.isValid || end <= minStartUtc) continue;
+    const clippedStart = DateTime.max(start, minStartUtc);
+    if (clippedStart >= end) continue;
+    out.push({
+      startISO: clippedStart.toISO()!,
+      endISO: end.toISO()!,
+    });
+  }
+  return out;
+}
+
+/** One day's availability for the day-toggle UI. */
+export interface DayAvailability {
+  date: string;
+  label: string;
+  slots: OverlapSlotResult[];
+}
+
+/** Manual availability window for the other person (date + time in their timezone). Id is UI-only. */
+export interface OtherPersonWindowInput {
+  date: string;
+  start: string;
+  end: string;
+}
+
+/**
+ * Convert manual "other person" windows for a given day into UTC availability ranges.
+ * Timezone: dateKey is interpreted in the given zone (e.g. "2026-03-13" = that calendar
+ * day in their timezone); start/end are local time on that day, then converted to UTC.
+ * This keeps day boundaries and labels consistent and avoids midnight-shift bugs.
+ * Windows on other days are ignored. Multiple windows on the same day all contribute.
+ */
+export function manualWindowsToUtcRangesForDay(
+  windows: OtherPersonWindowInput[],
+  dateKey: string,
+  zone: string
+): AvailabilityRange[] {
+  const tz = resolveTimezone(zone);
+  const dayStart = DateTime.fromISO(dateKey, { zone: tz }).startOf("day");
+  if (!dayStart.isValid) return [];
+
+  const ranges: AvailabilityRange[] = [];
+  for (const w of windows) {
+    if (w.date !== dateKey) continue;
+    const [sh, sm] = w.start.split(":").map(Number);
+    const [eh, em] = w.end.split(":").map(Number);
+    const start = dayStart.set({
+      hour: sh ?? 0,
+      minute: sm ?? 0,
+      second: 0,
+      millisecond: 0,
+    });
+    let end = dayStart.set({
+      hour: eh ?? 0,
+      minute: em ?? 0,
+      second: 0,
+      millisecond: 0,
+    });
+    if (end <= start) continue;
+    ranges.push({
+      startISO: start.toUTC().toISO()!,
+      endISO: end.toUTC().toISO()!,
+    });
+  }
+  return ranges.sort((a, b) => a.startISO.localeCompare(b.startISO));
+}
+
+/**
+ * Convert recurring weekly pattern windows (by weekday) for a given date into UTC ranges.
+ * The weekday is determined from dateKey in the other person's timezone.
+ */
+function weeklyPatternToUtcRangesForDay(
+  pattern: WeeklyPattern | null | undefined,
+  dateKey: string,
+  zone: string
+): AvailabilityRange[] {
+  if (!pattern) return [];
+  const tz = resolveTimezone(zone);
+  const dayStart = DateTime.fromISO(dateKey, { zone: tz }).startOf("day");
+  if (!dayStart.isValid) return [];
+
+  const weekday = dayStart.weekday; // 1 = Monday ... 7 = Sunday
+  const weekdayName: keyof WeeklyPattern =
+    weekday === 1
+      ? "Monday"
+      : weekday === 2
+        ? "Tuesday"
+        : weekday === 3
+          ? "Wednesday"
+          : weekday === 4
+            ? "Thursday"
+            : weekday === 5
+              ? "Friday"
+              : weekday === 6
+                ? "Saturday"
+                : "Sunday";
+
+  const windows = pattern[weekdayName] ?? [];
+  const ranges: AvailabilityRange[] = [];
+  for (const w of windows) {
+    const [sh, sm] = w.start.split(":").map(Number);
+    const [eh, em] = w.end.split(":").map(Number);
+    const start = dayStart.set({
+      hour: sh ?? 0,
+      minute: sm ?? 0,
+      second: 0,
+      millisecond: 0,
+    });
+    let end = dayStart.set({
+      hour: eh ?? 0,
+      minute: em ?? 0,
+      second: 0,
+      millisecond: 0,
+    });
+    if (end <= start) continue;
+    ranges.push({
+      startISO: start.toUTC().toISO()!,
+      endISO: end.toUTC().toISO()!,
+    });
+  }
+  return ranges.sort((a, b) => a.startISO.localeCompare(b.startISO));
+}
+
+/**
+ * Two-person mutual availability: for each of the next 7 days, intersect your free
+ * slots (working hours minus calendar busy, in zoneA) with the other person's manual
+ * windows (in zoneB). Returns one entry per day with only mutual slots.
+ *
+ * - My side: rangesA = working hours minus busy blocks for that day; today clipped to "now".
+ * - Their side: rangesB = manual windows for that date, converted to UTC via zoneB.
+ * - Overlap: findOverlappingSlotsFromRanges(rangesA, rangesB, ...) returns slots that
+ *   fit in both. Empty days get slots: [] so the UI can show "No mutual availability".
+ *
+ * Timezone: "today" and date keys use zoneA; their windows are interpreted in zoneB
+ * then converted to UTC so overlap is computed in a single time base (UTC).
+ */
+export function getAvailabilityByDayWithManualOther(
+  zoneA: string,
+  workingHoursA: TimeWindow[],
+  busyBlocks: BusyBlock[],
+  durationMinutes: number,
+  refDate: DateTime,
+  otherPersonWindows: OtherPersonWindowInput[],
+  zoneB: string,
+  weeklyPattern?: WeeklyPattern | null
+): DayAvailability[] {
+  const tzA = resolveTimezone(zoneA);
+  const todayInZoneA = refDate.setZone(tzA).startOf("day");
+  const nowUtc = refDate.toUTC();
+  const result: DayAvailability[] = [];
+
+  for (let i = 0; i < AVAILABILITY_DAYS_AHEAD; i++) {
+    const dayStart = todayInZoneA.plus({ days: i });
+    const dateKey = dayStart.toFormat("yyyy-MM-dd");
+    const label =
+      i === 0 ? "Today" : i === 1 ? "Tomorrow" : dayStart.toFormat("EEE MMM d");
+
+    let rangesA: AvailabilityRange[];
+    if (busyBlocks.length > 0) {
+      rangesA = workingHoursMinusBusy(
+        zoneA,
+        workingHoursA,
+        busyBlocks,
+        dayStart
+      );
+    } else {
+      rangesA = windowsToUtcRanges(zoneA, workingHoursA, dayStart);
+    }
+
+    if (i === 0) {
+      rangesA = clipRangesToMinStart(rangesA, nowUtc);
+    }
+
+    const manualRanges = manualWindowsToUtcRangesForDay(
+      otherPersonWindows,
+      dateKey,
+      zoneB
+    );
+    const weeklyRanges = weeklyPatternToUtcRangesForDay(
+      weeklyPattern,
+      dateKey,
+      zoneB
+    );
+    const rangesB = [...manualRanges, ...weeklyRanges].sort((a, b) =>
+      a.startISO.localeCompare(b.startISO)
+    );
+    const slots = findOverlappingSlotsFromRanges(
+      rangesA,
+      rangesB,
+      zoneA,
+      zoneB,
+      durationMinutes
+    );
+    result.push({ date: dateKey, label, slots });
+  }
+
+  return result;
+}
+
+const AVAILABILITY_DAYS_AHEAD = 7;
+
+/**
+ * Generate availability for exactly 7 days: today (in zone A) through the next 6 days.
+ * - Date boundaries: each day is that calendar day in zone A (start-of-day to next start-of-day).
+ * - Working hours: applied per day via windowsToUtcRanges(..., dayStart); events outside
+ *   working hours do not affect slot generation (we only subtract busy within working window).
+ * - Busy blocks: filtered to those overlapping the day (UTC), then clipped to working
+ *   segments; overlapping and partially overlapping events are merged correctly by
+ *   the segment loop in workingHoursMinusBusy.
+ * - Today: availability is clipped to "now" so no past slots are returned.
+ * - Empty days: still included in the result with slots: [] so the UI can show all 7 days.
+ * Returns one entry per day; no duplicate slots (findOverlappingSlotsFromRanges dedupes by startISO).
+ */
+export function getAvailabilityByDay(
+  zoneA: string,
+  zoneB: string,
+  workingHoursA: TimeWindow[],
+  workingHoursB: TimeWindow[],
+  busyBlocks: BusyBlock[],
+  durationMinutes: number,
+  refDate: DateTime = DateTime.now()
+): DayAvailability[] {
+  const tzA = resolveTimezone(zoneA);
+  const todayInZoneA = refDate.setZone(tzA).startOf("day");
+  const nowUtc = refDate.toUTC();
+  const result: DayAvailability[] = [];
+
+  for (let i = 0; i < AVAILABILITY_DAYS_AHEAD; i++) {
+    const dayStart = todayInZoneA.plus({ days: i });
+    const dateKey = dayStart.toFormat("yyyy-MM-dd");
+    const label =
+      i === 0
+        ? "Today"
+        : i === 1
+          ? "Tomorrow"
+          : dayStart.toFormat("EEE MMM d");
+
+    let rangesA: AvailabilityRange[];
+    if (busyBlocks.length > 0) {
+      rangesA = workingHoursMinusBusy(
+        zoneA,
+        workingHoursA,
+        busyBlocks,
+        dayStart
+      );
+    } else {
+      rangesA = windowsToUtcRanges(zoneA, workingHoursA, dayStart);
+    }
+
+    if (i === 0) {
+      rangesA = clipRangesToMinStart(rangesA, nowUtc);
+    }
+
+    const rangesB = windowsToUtcRanges(zoneB, workingHoursB, dayStart);
+    const slots = findOverlappingSlotsFromRanges(
+      rangesA,
+      rangesB,
+      zoneA,
+      zoneB,
+      durationMinutes
+    );
+
+    result.push({ date: dateKey, label, slots });
+  }
+
+  return result;
 }
 
 /** Supported meeting durations in minutes. */

@@ -5,6 +5,30 @@ export interface TimeWindow {
   end: string;
 }
 
+export type Weekday =
+  | "Sunday"
+  | "Monday"
+  | "Tuesday"
+  | "Wednesday"
+  | "Thursday"
+  | "Friday"
+  | "Saturday";
+
+/** Recurring weekly availability pattern by weekday (other person's local time). */
+export type WeeklyPattern = Record<Weekday, TimeWindow[]>;
+
+/** One manual availability window for the other person (date + time range in their timezone). */
+export interface OtherPersonWindow {
+  /** Unique id for list keys (generated in UI). */
+  id: string;
+  /** Date in scheduling range: yyyy-MM-dd (one of the next 7 days). */
+  date: string;
+  /** Start time HH:mm (24h) in other person's timezone. */
+  start: string;
+  /** End time HH:mm (24h) in other person's timezone. */
+  end: string;
+}
+
 /** UTC availability range (ISO start/end). Used for overlap math. */
 export interface AvailabilityRange {
   startISO: string;
