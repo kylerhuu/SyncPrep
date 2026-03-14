@@ -438,120 +438,100 @@ export default function SchedulePage() {
     <div className="min-h-screen flex flex-col bg-app-canvas">
       <AppNav />
 
-      <main className="flex-1 max-w-6xl w-full mx-auto px-5 py-8 sm:px-6 relative">
-        <div className="mb-10">
+      <main className="flex-1 max-w-2xl w-full mx-auto px-5 py-12 sm:px-6 sm:py-14 relative">
+        <div className="mb-12">
           <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
             Schedule & prepare
           </h1>
-          <p className="mt-2 text-sm text-slate-600 leading-relaxed">
+          <p className="mt-2 text-slate-600 leading-relaxed">
             Schedule across time zones and prepare better meetings.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10">
-          <div className="space-y-12">
-            {/* Step 1 — Connect calendar (first, prominent) */}
-            <section aria-label="Connect your calendar" className="space-y-3">
-              <div className="flex items-center gap-3">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white" aria-hidden>
-                  1
-                </span>
-                <h2 className="text-lg font-bold text-slate-900 tracking-tight">
-                  Connect your Google Calendar
-                </h2>
+        <div className="flex flex-col gap-20 max-w-2xl">
+          {/* Step 1 — Connect calendar */}
+            <section aria-label="Connect your calendar" className="rounded-2xl border border-slate-200/80 bg-white shadow-sm overflow-hidden">
+              <div className="px-8 pt-8 pb-6">
+                <div className="flex items-center gap-3 mb-1">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-700 text-sm font-semibold text-white" aria-hidden>1</span>
+                  <h2 className="text-base font-semibold text-slate-900 tracking-tight">Connect calendar</h2>
+                </div>
+                <p className="ml-11 text-sm text-slate-600">
+                  Connect so we can use your busy times.
+                </p>
               </div>
-              <p className="text-sm text-slate-600 leading-relaxed pl-11">
-                Connect once so we can detect your busy times and open slots—no manual entry needed.
-              </p>
-              <div className="rounded-2xl border-2 border-blue-200/70 bg-gradient-to-br from-blue-50/50 to-white shadow-md overflow-hidden">
-                <GoogleCalendarSection
-                  userTimeZone={zoneA}
-                  onCalendarChange={onCalendarChange}
-                  derivedAvailabilityToday={derivedAvailabilityToday}
+              <div className="px-8 pb-8 space-y-6">
+                <div className="rounded-xl border-2 border-blue-200/70 bg-gradient-to-br from-blue-50/50 to-white overflow-hidden">
+                  <GoogleCalendarSection
+                    userTimeZone={zoneA}
+                    onCalendarChange={onCalendarChange}
+                    derivedAvailabilityToday={derivedAvailabilityToday}
+                  />
+                </div>
+                <div className="space-y-6 rounded-xl border border-slate-200/80 bg-slate-50/40 p-6">
+                <TimezoneFields
+                  zoneA={zoneA}
+                  zoneB={zoneB}
+                  onZoneAChange={setZoneA}
+                  onZoneBChange={setZoneB}
+                  errorZoneA={validation.errorZoneA}
+                  errorZoneB={undefined}
+                  singleUser
+                />
+                <DurationSelect value={duration} onChange={setDuration} />
+                <WorkingHoursInput
+                  value={workingHoursA}
+                  onChange={setWorkingHoursA}
+                  label="Your working hours"
+                  helperText={
+                    calendarConnected
+                      ? "Used with your calendar to find your free slots."
+                      : "When you're generally available. Connect your calendar above for real busy times."
+                  }
+                />
+                </div>
+              </div>
+            </section>
+
+            {/* Step 2 — Other person's availability */}
+            <section aria-label="Other person's availability" className="rounded-2xl border border-slate-200/80 bg-white shadow-sm overflow-hidden">
+              <div className="px-8 pt-8 pb-6">
+                <div className="flex items-center gap-3 mb-1">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-700 text-sm font-semibold text-white" aria-hidden>2</span>
+                  <h2 className="text-base font-semibold text-slate-900 tracking-tight">Their availability</h2>
+                </div>
+                <p className="ml-11 text-sm text-slate-600">
+                  Weekly pattern, screenshot, or specific dates.
+                </p>
+              </div>
+              <div className="px-8 pb-8">
+                <OtherPersonAvailabilitySection
+                  scheduleDays={scheduleDays}
+                  zoneB={zoneB}
+                  onZoneBChange={setZoneB}
+                  windows={otherPersonWindows}
+                  onWindowsChange={setOtherPersonWindows}
+                  weeklyPattern={weeklyPattern}
+                  onWeeklyPatternChange={setWeeklyPattern}
                 />
               </div>
             </section>
 
-            {/* Step 2 — Find meeting time */}
-            <section aria-label="Find the best meeting time" className="space-y-3 pt-2">
-              <div className="flex items-center gap-3">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-700 text-sm font-bold text-white" aria-hidden>
-                  2
-                </span>
-                <h2 className="text-lg font-bold text-slate-900 tracking-tight">
-                  Find the best meeting time
-                </h2>
-              </div>
-              <p className="text-sm text-slate-600 leading-relaxed pl-11">
-                Set your time zone and working hours to see your free slots for the next 7 days.
-              </p>
-              <div className="rounded-2xl border border-slate-200/80 bg-surface-elevated overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 card-hover">
-                <div className="border-b border-slate-200/80 px-5 py-4 bg-gradient-to-r from-slate-50 to-white">
-                  <h3 className="text-sm font-semibold tracking-tight text-slate-800">
-                    Your time zone & working hours
-                  </h3>
+            {/* Step 3 — Find a meeting time */}
+            <section aria-label={useTwoPersonOverlap ? "Mutual availability" : "Available times"} className="rounded-2xl border border-slate-200/80 bg-white shadow-sm overflow-hidden">
+              <div className="px-8 pt-8 pb-6">
+                <div className="flex items-center gap-3 mb-1">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-700 text-sm font-semibold text-white" aria-hidden>3</span>
+                  <h2 className="text-base font-semibold text-slate-900 tracking-tight">Find a time</h2>
                 </div>
-                <div className="p-5 space-y-6">
-                  <TimezoneFields
-                    zoneA={zoneA}
-                    zoneB={zoneB}
-                    onZoneAChange={setZoneA}
-                    onZoneBChange={setZoneB}
-                    errorZoneA={validation.errorZoneA}
-                    errorZoneB={undefined}
-                    singleUser
-                  />
-                  <DurationSelect
-                    value={duration}
-                    onChange={setDuration}
-                  />
-                  <WorkingHoursInput
-                    value={workingHoursA}
-                    onChange={setWorkingHoursA}
-                    label="Your working hours"
-                    helperText={
-                      calendarConnected
-                        ? "Used with your calendar to find your free slots. Busy times come from your calendar."
-                        : "When you're generally available. Connect your calendar above to use your real busy and free times."
-                    }
-                  />
-                </div>
+                <p className="ml-11 text-sm text-slate-600">
+                  {useTwoPersonOverlap ? "Pick a mutual slot." : "Pick an available slot."}
+                </p>
               </div>
-            </section>
-
-            <section aria-label="Other person's availability" className="pt-2">
-              <OtherPersonAvailabilitySection
-                scheduleDays={scheduleDays}
-                zoneB={zoneB}
-                onZoneBChange={setZoneB}
-                windows={otherPersonWindows}
-                onWindowsChange={setOtherPersonWindows}
-                weeklyPattern={weeklyPattern}
-                onWeeklyPatternChange={setWeeklyPattern}
-              />
-            </section>
-
-            <WeeklyScheduleSection
-              userTimeZone={zoneA}
-              workingHours={workingHoursA}
-              events={calendarEvents}
-              connected={calendarConnected}
-              selectedSlot={selectedSlot}
-            />
-          </div>
-
-          <div className="space-y-7 lg:min-w-0">
-            <section
-              className="space-y-4"
-              aria-label={useTwoPersonOverlap ? "Mutual availability" : "Available times"}
-            >
-              {validation.canCompute && availabilityByDay.length > 0 && (
-                <div
-                  className="flex flex-wrap gap-2 sm:gap-2.5 pb-1 -mx-0.5"
-                  role="tablist"
-                  aria-label="Choose day"
-                >
-                  {availabilityByDay.map((day) => {
+              <div className="px-8 pb-8 space-y-5">
+                {validation.canCompute && availabilityByDay.length > 0 && (
+                  <div className="flex flex-wrap gap-2" role="tablist" aria-label="Choose day">
+                    {availabilityByDay.map((day) => {
                     const isSelected = selectedDay === day.date;
                     return (
                       <button
@@ -560,74 +540,55 @@ export default function SchedulePage() {
                         role="tab"
                         aria-selected={isSelected}
                         onClick={() => setSelectedDay(day.date)}
-                        className={`
-                          rounded-xl border-2 px-3.5 py-2.5 text-sm font-medium transition-all duration-200 shrink-0
-                          focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2
-                          ${isSelected
-                            ? "border-blue-500 bg-blue-500 text-white shadow-md shadow-blue-500/25"
-                            : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50"
-                          }
-                        `}
+                        className={`rounded-xl border-2 px-3.5 py-2.5 text-sm font-medium transition-all duration-200 shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 ${isSelected ? "border-blue-500 bg-blue-500 text-white shadow-md shadow-blue-500/25" : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50"}`}
                       >
-                        <span className="block truncate max-w-[7rem] sm:max-w-none">
-                          {day.label}
-                        </span>
+                        <span className="block truncate max-w-[7rem] sm:max-w-none">{day.label}</span>
                         {day.slots.length > 0 && (
-                          <span
-                            className={`ml-1.5 font-normal tabular-nums ${
-                              isSelected ? "text-blue-100" : "text-slate-500"
-                            }`}
-                          >
+                          <span className={`ml-1.5 font-normal tabular-nums ${isSelected ? "text-blue-100" : "text-slate-500"}`}>
                             ({day.slots.length})
                           </span>
                         )}
                       </button>
                     );
-                  })}
-                </div>
-              )}
-              <OverlapResults
-                allSlots={allSlots}
-                slotsForSelectedDay={selectedDaySlots}
-                suggestedSlots={suggestedSlots}
-                rankedSlotsForSelectedDay={rankedSlotsForSelectedDay}
-                selectedSlot={selectedSlot}
-                onSelectSlot={setSelectedSlot}
-                zoneA={zoneA}
-                zoneB={useTwoPersonOverlap ? zoneB : undefined}
-                singleUser={!useTwoPersonOverlap}
-                hasValidInputNoOverlap={hasValidInputNoOverlap}
-                showInputPrompt={showInputPrompt}
-              />
-            </section>
-            <section className="space-y-1" aria-label="Selected meeting">
-              {selectedSlot ? (
-                <SelectedMeetingCard
-                  slot={selectedSlot}
+                    })}
+                  </div>
+                )}
+                <OverlapResults
+                  allSlots={allSlots}
+                  slotsForSelectedDay={selectedDaySlots}
+                  suggestedSlots={suggestedSlots}
+                  rankedSlotsForSelectedDay={rankedSlotsForSelectedDay}
+                  selectedSlot={selectedSlot}
+                  onSelectSlot={setSelectedSlot}
                   zoneA={zoneA}
                   zoneB={useTwoPersonOverlap ? zoneB : undefined}
-                  title="Meeting"
                   singleUser={!useTwoPersonOverlap}
+                  hasValidInputNoOverlap={hasValidInputNoOverlap}
+                  showInputPrompt={showInputPrompt}
                 />
-              ) : allSlots.length > 0 ? (
-                <p className="text-sm text-slate-500 text-center py-6 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/90">
-                  Select a time to add it to your calendar.
-                </p>
-              ) : null}
-            </section>
-            <section className="space-y-3 pt-2" aria-label="Generate meeting prep">
-              <div className="flex items-center gap-3">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-700 text-sm font-bold text-white" aria-hidden>
-                  3
-                </span>
-                <h2 className="text-lg font-bold text-slate-900 tracking-tight">
-                  Generate quick meeting prep
-                </h2>
+                <WeeklyScheduleSection
+                  userTimeZone={zoneA}
+                  workingHours={workingHoursA}
+                  events={calendarEvents}
+                  connected={calendarConnected}
+                  selectedSlot={selectedSlot}
+                />
               </div>
-              <p className="text-sm text-slate-600 leading-relaxed pl-11">
-                Get a short brief, interview prep, or talking points so you’re ready for the call.
-              </p>
-              <PrepNotesPanel
+            </section>
+
+            {/* Step 4 — Meeting context */}
+            <section aria-label="Meeting context" className="rounded-2xl border border-slate-200/80 bg-white shadow-sm overflow-hidden">
+              <div className="px-8 pt-8 pb-6">
+                <div className="flex items-center gap-3 mb-1">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-700 text-sm font-semibold text-white" aria-hidden>4</span>
+                  <h2 className="text-base font-semibold text-slate-900 tracking-tight">Meeting context</h2>
+                </div>
+                <p className="ml-11 text-sm text-slate-600">
+                  Notes, resume, or job description for prep.
+                </p>
+              </div>
+              <div className="px-8 pb-8">
+                <PrepNotesPanel
                 notes={prepNotes}
                 loading={prepLoading}
                 error={prepError}
@@ -642,18 +603,69 @@ export default function SchedulePage() {
                 onJobDescriptionChange={setJobDescription}
                 onGenerate={generatePrep}
               />
+              </div>
             </section>
-            {prepNotes && (
-              <p className="text-sm text-slate-600">
-                <Link
-                  href="/prep"
-                  className="font-semibold text-[var(--accent-blue)] hover:text-blue-700 hover:underline transition-colors"
-                >
-                  View full brief →
-                </Link>
-              </p>
-            )}
-          </div>
+
+            {/* Step 5 — Create calendar event */}
+            <section aria-label="Create calendar event" className="rounded-2xl border border-slate-200/80 bg-white shadow-sm overflow-hidden">
+              <div className="px-8 pt-8 pb-6">
+                <div className="flex items-center gap-3 mb-1">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-700 text-sm font-semibold text-white" aria-hidden>5</span>
+                  <h2 className="text-base font-semibold text-slate-900 tracking-tight">Add to calendar</h2>
+                </div>
+                <p className="ml-11 text-sm text-slate-600">
+                  Create the event. Select a time in step 3 first.
+                </p>
+              </div>
+              <div className="px-8 pb-8">
+              {selectedSlot ? (
+                <SelectedMeetingCard
+                  slot={selectedSlot}
+                  zoneA={zoneA}
+                  zoneB={useTwoPersonOverlap ? zoneB : undefined}
+                  title="Meeting"
+                  singleUser={!useTwoPersonOverlap}
+                />
+              ) : allSlots.length > 0 ? (
+                <p className="text-sm text-slate-500 text-center py-8 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/90">
+                  Select a time above to create your event.
+                </p>
+              ) : (
+                <p className="text-sm text-slate-500 text-center py-8 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/90">
+                  Complete steps 1 and 2 to see available times.
+                </p>
+              )}
+              </div>
+            </section>
+
+            {/* Step 6 — Generate AI meeting brief */}
+            <section aria-label="Generate AI meeting brief" className="rounded-2xl border border-slate-200/80 bg-white shadow-sm overflow-hidden">
+              <div className="px-8 pt-8 pb-6">
+                <div className="flex items-center gap-3 mb-1">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-700 text-sm font-semibold text-white" aria-hidden>6</span>
+                  <h2 className="text-base font-semibold text-slate-900 tracking-tight">AI meeting brief</h2>
+                </div>
+                <p className="ml-11 text-sm text-slate-600">
+                  Talking points and prep. Add context in step 4, then generate.
+                </p>
+              </div>
+              <div className="px-8 pb-8">
+              {prepNotes ? (
+                <p className="text-sm text-slate-600">
+                  <Link
+                    href="/prep"
+                    className="font-semibold text-[var(--accent-blue)] hover:text-blue-700 hover:underline transition-colors"
+                  >
+                    View full brief →
+                  </Link>
+                </p>
+              ) : (
+                <p className="text-sm text-slate-600">
+                  Add context in step 4, then click Generate.
+                </p>
+              )}
+              </div>
+            </section>
         </div>
       </main>
       <AppFooter />

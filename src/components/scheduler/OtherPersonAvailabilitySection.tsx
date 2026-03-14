@@ -56,6 +56,14 @@ function rangesOverlap(
   return toMins(a.start) < toMins(b.end) && toMins(b.start) < toMins(a.end);
 }
 
+/** Get weekday name from a date string (yyyy-MM-dd). */
+function getWeekdayFromDate(dateStr: string): Weekday {
+  const d = new Date(dateStr + "T12:00:00");
+  const idx = d.getDay();
+  const keys: Weekday[] = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  return keys[idx];
+}
+
 type InputTab = "manual" | "screenshot";
 const WEEKDAYS: { key: Weekday; label: string; short: string }[] = [
   { key: "Sunday", label: "Sunday", short: "Sun" },
@@ -84,7 +92,7 @@ export function OtherPersonAvailabilitySection({
   const errorZoneB =
     zoneB.trim() && !zoneBValid ? "Couldn't find that time zone." : undefined;
 
-  const [inputTab, setInputTab] = useState<InputTabExtended>("manual");
+  const [inputTab, setInputTab] = useState<InputTabExtended>("weekly");
   const [screenshotState, setScreenshotState] = useState<ScreenshotState>("idle");
   const [draftWindows, setDraftWindows] = useState<OtherPersonWindow[]>([]);
   const [parseError, setParseError] = useState<string | null>(null);
@@ -145,6 +153,14 @@ export function OtherPersonAvailabilitySection({
 
   const confirmDraft = useCallback(() => {
     onWindowsChange([...windows, ...draftWindows]);
+    const merged: WeeklyPattern = { ...weeklyPattern };
+    for (const w of draftWindows) {
+      if (!w.date?.trim() || !w.start || !w.end) continue;
+      const weekday = getWeekdayFromDate(w.date);
+      const existing = merged[weekday] ?? [];
+      merged[weekday] = [...existing, { start: w.start, end: w.end }];
+    }
+    onWeeklyPatternChange(merged);
     setDraftWindows([]);
     setScreenshotState("idle");
     setParseError(null);
@@ -156,8 +172,8 @@ export function OtherPersonAvailabilitySection({
       URL.revokeObjectURL(previewUrl);
       setPreviewUrl(null);
     }
-    setInputTab("manual");
-  }, [windows, draftWindows, onWindowsChange, previewUrl]);
+    setInputTab("weekly");
+  }, [windows, draftWindows, weeklyPattern, onWindowsChange, onWeeklyPatternChange, previewUrl]);
 
   const discardDraft = useCallback(() => {
     setDraftWindows([]);
@@ -371,17 +387,6 @@ export function OtherPersonAvailabilitySection({
           <div className="flex border-b border-slate-200 mb-4">
             <button
               type="button"
-              onClick={() => setInputTab("manual")}
-              className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
-                inputTab === "manual"
-                  ? "bg-white border border-slate-200 border-b-0 -mb-px text-emerald-800"
-                  : "text-slate-600 hover:text-slate-900"
-              }`}
-            >
-              Manual entry
-            </button>
-            <button
-              type="button"
               onClick={() => setInputTab("weekly")}
               className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
                 inputTab === "weekly"
@@ -389,7 +394,18 @@ export function OtherPersonAvailabilitySection({
                   : "text-slate-600 hover:text-slate-900"
               }`}
             >
-              Weekly pattern
+              Weekly
+            </button>
+            <button
+              type="button"
+              onClick={() => setInputTab("manual")}
+              className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
+                inputTab === "manual"
+                  ? "bg-white border border-slate-200 border-b-0 -mb-px text-emerald-800"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              Specific dates
             </button>
             <button
               type="button"
