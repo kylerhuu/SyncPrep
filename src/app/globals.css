@@ -698,6 +698,17 @@ body {
   color: var(--schedule-text) !important;
 }
 
+.schedule-dark-tech header .nav-cta {
+  background: var(--schedule-accent) !important;
+  color: white !important;
+  border-color: transparent !important;
+}
+
+.schedule-dark-tech header .nav-cta:hover {
+  background: #e66d0f !important;
+  color: white !important;
+}
+
 /* Step cards - stronger depth, subtle gradient */
 .schedule-dark-tech main section {
   background: linear-gradient(
@@ -1185,4 +1196,30 @@ body {
     0 0 0 1px rgba(255, 255, 255, 0.03) inset,
     0 8px 24px -8px rgba(0, 0, 0, 0.4),
     0 0 20px var(--schedule-glow-subtle) !important;
+}
+
+/* ========== Homepage (dark product landing) ========== */
+.home-hero-preview {
+  background: linear-gradient(180deg, rgba(17, 21, 30, 0.98) 0%, rgba(12, 15, 22, 0.99) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.03) inset,
+    0 24px 48px -12px rgba(0, 0, 0, 0.5),
+    0 0 40px rgba(255, 140, 42, 0.06);
+}
+
+.home-workflow-card {
+  background: linear-gradient(180deg, rgba(21, 25, 35, 0.95) 0%, rgba(17, 20, 30, 0.98) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.2) inset,
+    0 8px 32px -8px rgba(0, 0, 0, 0.4);
+}
+
+.home-feature-card {
+  background: linear-gradient(180deg, rgba(21, 25, 35, 0.9) 0%, rgba(17, 20, 30, 0.95) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.2) inset,
+    0 12px 40px -12px rgba(0, 0, 0, 0.35);
 }

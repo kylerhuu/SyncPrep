@@ -22,7 +22,7 @@ export function MarketingNav() {
           <Link href="/calendar" className={navLinkClass}>
             Weekly schedule
           </Link>
-          <Link href="/schedule" className={primaryButtonClass}>
+          <Link href="/schedule" className={`${primaryButtonClass} nav-cta`}>
             Open app
           </Link>
         </div>

@@ -1,318 +1,298 @@
 import Link from "next/link";
 import { MarketingNav } from "@/components/nav/MarketingNav";
-import { ScrollReveal } from "@/components/ui/ScrollReveal";
-
-const primaryButtonClass =
-  "inline-flex items-center justify-center min-h-[52px] rounded-xl px-8 py-3.5 text-base font-semibold bg-[var(--accent-navy)] text-white hover:bg-slate-800 active:bg-slate-900 border border-transparent shadow-xl shadow-slate-900/25 hover:shadow-[0_10px_30px_rgba(59,130,246,0.35),0_0_30px_rgba(59,130,246,0.2)] hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60 focus-visible:ring-offset-2";
-const secondaryButtonClass =
-  "inline-flex items-center justify-center min-h-[52px] rounded-xl px-8 py-3.5 text-base font-medium text-slate-700 hover:text-slate-900 bg-white/95 backdrop-blur-sm hover:bg-white border-2 border-slate-200 hover:border-slate-300 shadow-lg shadow-slate-900/8 hover:shadow-xl hover:shadow-[0_0_32px_-8px_rgba(37,99,235,0.15)] hover:-translate-y-0.5 transition-all duration-300 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2";
+import { ScheduleBackground } from "@/components/ui/ScheduleBackground";
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen flex flex-col bg-[var(--background)]">
-      <MarketingNav />
+    <div className="schedule-dark-tech min-h-screen flex flex-col">
+      <div className="schedule-bg-layer" aria-hidden>
+        <ScheduleBackground />
+      </div>
+      <div className="schedule-content relative z-10 flex flex-col flex-1">
+        <MarketingNav />
 
-      <main className="flex-1">
-        {/* Hero - 90vh, layered lighting, product preview */}
-        <section className="relative px-5 sm:px-6 py-24 sm:py-32 overflow-hidden min-h-[90vh] flex items-center">
-          {/* Base: full-bleed gradient (no white strip) */}
-          <div className="absolute inset-0 bg-hero-base pointer-events-none" aria-hidden />
-          {/* Slow gradient drift - living background */}
-          <div className="hero-gradient-drift" aria-hidden />
-          {/* Radial light sources */}
-          <div className="absolute inset-0 hero-lights pointer-events-none" aria-hidden />
-          {/* Soft gradient waves (drift) */}
-          <div className="hero-wave hero-wave-1" aria-hidden />
-          <div className="hero-wave hero-wave-2" aria-hidden />
-          <div className="hero-wave hero-wave-3" aria-hidden />
-          {/* Grid: faded at center, strong at edges */}
-          <div className="absolute inset-0 bg-dot-pattern-vignette pointer-events-none" aria-hidden />
-          {/* Headline glow - large, blurred blue/purple */}
-          <div className="hero-headline-glow-bg" aria-hidden />
-          {/* Focal glow behind headline */}
-          <div className="hero-glow" aria-hidden />
-          {/* CTA glow - stronger */}
-          <div className="absolute bottom-[12%] left-1/2 -translate-x-1/2 w-[28rem] h-36 rounded-full blur-[80px] opacity-50 pointer-events-none bg-blue-500/50" aria-hidden />
-          <div className="absolute bottom-[12%] left-1/2 -translate-x-1/2 w-64 h-24 rounded-full blur-[48px] opacity-40 pointer-events-none bg-violet-400/40" aria-hidden />
-
-          {/* Floating product preview - large, layered, overlapping */}
-          <div className="hero-schedule-card hidden lg:block" aria-hidden>
-            <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Weekly schedule</div>
-            <div className="flex gap-2 mb-3">
-              <div className="h-3 rounded-lg bg-amber-300/90 flex-1 max-w-[40px]" />
-              <div className="h-3 rounded-lg bg-amber-200/90 flex-1 max-w-[24px]" />
-              <div className="h-3 rounded-lg bg-emerald-300/90 flex-1 max-w-[32px]" />
-              <div className="h-3 rounded-lg bg-blue-400/90 flex-1" />
-              <div className="h-3 rounded-lg bg-emerald-200/80 flex-1 max-w-[20px]" />
-            </div>
-            <div className="grid grid-cols-5 gap-2">
-              {["Mon", "Tue", "Wed", "Thu", "Fri"].map((d, i) => (
-                <div key={i} className="rounded-lg bg-slate-100/95 h-14 flex items-center justify-center text-xs font-bold text-slate-600">
-                  {d}
+        <main className="flex-1">
+          {/* Hero — two columns: copy left, product preview right */}
+          <section className="relative px-5 sm:px-6 py-20 sm:py-28 lg:py-32 overflow-hidden">
+            <div className="max-w-6xl mx-auto lg:grid lg:grid-cols-[1fr_minmax(420px,1fr)] lg:gap-12 lg:items-center">
+              <div className="text-center lg:text-left">
+                <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold tracking-tight text-[#E8EDF5] leading-[1.1]">
+                  Schedule across time zones and prepare better meetings.
+                </h1>
+                <p className="mt-6 text-base sm:text-lg text-[#9FB0C6] leading-relaxed max-w-xl mx-auto lg:mx-0">
+                  Import your calendar, find the best overlap with anyone’s time zone, and generate an AI meeting brief—built for interviews, networking calls, and remote meetings.
+                </p>
+                <div className="mt-10 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
+                  <Link
+                    href="/schedule"
+                    className="inline-flex items-center justify-center min-h-[52px] rounded-xl px-8 py-3.5 text-base font-semibold bg-[#ff7a18] text-white hover:bg-[#e66d0f] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff7a18]/50 focus-visible:ring-offset-2 ring-offset-[#0c0f18] transition-all duration-200 shadow-lg shadow-[#ff7a18]/20 w-full sm:w-auto"
+                  >
+                    Start scheduling
+                  </Link>
+                  <a
+                    href="#how-it-works"
+                    className="inline-flex items-center justify-center min-h-[52px] rounded-xl px-8 py-3.5 text-base font-medium text-[#E8EDF5] border border-white/10 hover:border-white/20 hover:bg-white/5 transition-all duration-200 w-full sm:w-auto"
+                  >
+                    See how it works
+                  </a>
                 </div>
-              ))}
-            </div>
-            <div className="mt-2 flex items-center justify-between text-[10px] text-slate-500">
-              <span>6am</span>
-              <span>6pm</span>
-            </div>
-          </div>
-
-          <div className="relative w-full max-w-3xl mx-auto text-center z-10">
-            <h1
-              className={`hero-reveal hero-reveal-delay-1 text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-extrabold text-slate-900 tracking-tight leading-[1.08] hero-headline-glow`}
-            >
-              Schedule across time zones and prepare better meetings.
-            </h1>
-            <p className="hero-reveal hero-reveal-delay-2 mt-8 text-xl sm:text-2xl text-slate-700 leading-relaxed max-w-2xl mx-auto font-semibold">
-              Import your calendar, find the best overlap, and generate your
-              meeting brief—built for interviews, networking calls, and remote
-              meetings.
-            </p>
-            <div className="hero-reveal hero-reveal-delay-3 mt-14 flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link href="/schedule" className={`${primaryButtonClass} w-full sm:w-auto`}>
-                Start scheduling
-              </Link>
-              <a
-                href="#how-it-works"
-                className={`${secondaryButtonClass} w-full sm:w-auto`}
-              >
-                See how it works
-              </a>
-            </div>
-          </div>
-        </section>
-
-        {/* Product showcase - cinematic stage */}
-        <section className="relative px-5 sm:px-6 py-24 sm:py-32 overflow-hidden section-tint border-b border-slate-200/80">
-          <div className="absolute inset-0 bg-dot-pattern pointer-events-none opacity-40" aria-hidden />
-          <div className="absolute inset-0 bg-signal-grid pointer-events-none opacity-30" aria-hidden />
-          <div className="relative max-w-5xl mx-auto showcase-stage">
-            <h2 className="relative text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight text-center mb-4">
-              Your schedule, at a glance
-            </h2>
-            <p className="relative text-base sm:text-lg text-slate-600 text-center max-w-2xl mx-auto mb-16 font-medium">
-              Weekly view with busy blocks, open gaps, and your selected meeting—designed for clarity.
-            </p>
-            <ScrollReveal className="relative z-10 showcase-frame overflow-hidden bg-gradient-to-br from-slate-50 via-blue-50/40 to-indigo-50/50 aspect-[16/10] max-h-[520px] flex items-center justify-center p-4 sm:p-10">
-              {/* Premium dashboard mockup */}
-              <div className="w-full h-full max-w-4xl mx-auto rounded-xl surface-glass border border-slate-200/90 shadow-2xl shadow-slate-900/15 flex flex-col overflow-hidden">
-                <div className="flex items-center gap-3 px-4 sm:px-6 py-3 border-b border-slate-200/80 bg-slate-50/80">
-                  <div className="flex gap-1.5">
-                    {["#ef4444","#f59e0b","#22c55e"].map((c,i) => <div key={i} className="w-3 h-3 rounded-full" style={{background:c}} />)}
-                  </div>
-                  <span className="text-xs font-medium text-slate-500">SyncPrep — Schedule</span>
-                </div>
-                <div className="flex-1 p-4 sm:p-6 flex flex-col gap-4">
-                  <div className="flex items-center justify-between">
-                    <div className="h-6 w-32 rounded-lg bg-slate-200/80" />
-                    <div className="flex gap-2">
-                      <div className="h-8 w-20 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-semibold">Week</div>
-                      <div className="h-8 w-20 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center text-xs font-medium">Month</div>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-5 gap-2 flex-1 min-h-0">
-                    {["Mon","Tue","Wed","Thu","Fri"].map((d,i) => (
-                      <div key={d} className="rounded-lg bg-slate-50/90 border border-slate-200/60 flex flex-col gap-1 p-2">
-                        <div className="text-[10px] font-semibold text-slate-500 uppercase">{d}</div>
-                        <div className="flex-1 flex flex-col gap-1">
-                          <div className="h-4 rounded bg-amber-200/90" />
-                          <div className="h-4 rounded bg-amber-100/90 flex-1 max-h-6" />
-                          <div className="h-4 rounded bg-emerald-300/80" />
-                          <div className="h-4 rounded bg-blue-400/90" />
-                          <div className="h-4 rounded bg-emerald-200/70 flex-1 max-h-4" />
+              </div>
+              <div className="mt-12 lg:mt-0 flex justify-center lg:justify-end">
+                <div className="home-hero-preview rounded-2xl overflow-hidden w-full max-w-[480px] aspect-[4/3] flex">
+                  {/* Product preview: weekly grid + side panel */}
+                  <div className="flex-1 flex flex-col min-w-0 p-3 border-r border-white/5">
+                    <p className="text-[10px] font-semibold text-[#9FB0C6] uppercase tracking-wider mb-2">Weekly schedule</p>
+                    <div className="flex gap-1 mb-2">
+                      {["Mon", "Tue", "Wed", "Thu", "Fri"].map((d) => (
+                        <div key={d} className="flex-1 rounded bg-white/5 py-1.5 text-center text-[10px] font-medium text-[#9FB0C6]">
+                          {d}
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
+                    <div className="grid grid-cols-5 gap-1 flex-1 min-h-0">
+                      {[0, 1, 2, 3, 4].map((col) => (
+                        <div key={col} className="flex flex-col gap-0.5">
+                          <div className="h-2 rounded bg-amber-500/40 flex-shrink-0" />
+                          <div className="h-2 rounded bg-amber-400/30 flex-shrink-0 w-3/4" />
+                          <div className="flex-1 min-h-[4px] rounded bg-white/5" />
+                          <div className="h-2 rounded bg-[#ff7a18]/50 flex-shrink-0 w-2/3" />
+                          <div className="h-2 rounded bg-emerald-500/30 flex-shrink-0" />
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-[9px] text-[#6b7c94] mt-1">6am – 8pm</p>
                   </div>
-                  <div className="flex items-center justify-between text-[10px] text-slate-400 px-1">
-                    <span>6:00 AM</span>
-                    <span>6:00 PM</span>
+                  <div className="w-[38%] min-w-[140px] flex flex-col bg-[#111827]/80 p-3">
+                    <p className="text-[10px] font-semibold text-[#E8EDF5] mb-2">Add to calendar</p>
+                    <div className="rounded-lg bg-white/5 border border-white/5 p-2 space-y-1.5">
+                      <div className="h-2 rounded bg-white/10 w-full" />
+                      <div className="h-2 rounded bg-white/5 w-4/5" />
+                      <div className="h-6 rounded bg-[#ff7a18]/30 border border-[#ff7a18]/40 flex items-center justify-center mt-2">
+                        <span className="text-[9px] font-semibold text-[#ff7a18]">Create event</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
-            </ScrollReveal>
-          </div>
-        </section>
+            </div>
+          </section>
 
-        {/* Product explanation - tinted cards */}
-        <section className="relative px-5 sm:px-6 py-24 sm:py-28 overflow-hidden section-tint border-b border-slate-200/60">
-          <div className="absolute inset-0 bg-signal-grid pointer-events-none opacity-80" aria-hidden />
-          <div className="relative max-w-4xl mx-auto">
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight text-center mb-16">
-              Schedule and prep in one place
-            </h2>
-            <ul className="grid sm:grid-cols-3 gap-8 sm:gap-10">
-              {[
-                { icon: "calendar", color: "blue", border: "hover:border-blue-300", bg: "from-blue-50/80 to-indigo-50/60", iconBg: "from-blue-500 to-indigo-600", iconShadow: "shadow-blue-500/30" },
-                { icon: "clock", color: "cyan", border: "hover:border-cyan-300", bg: "from-cyan-50/80 to-blue-50/60", iconBg: "from-cyan-500 to-blue-600", iconShadow: "shadow-cyan-500/30" },
-                { icon: "document", color: "violet", border: "hover:border-violet-300", bg: "from-violet-50/80 to-indigo-50/60", iconBg: "from-violet-500 to-indigo-600", iconShadow: "shadow-violet-500/30" },
-              ].map((item, i) => (
-                <li
-                  key={item.icon}
-                  className={`rounded-2xl border-2 border-slate-200/90 bg-gradient-to-br ${item.bg} p-7 shadow-xl shadow-slate-900/8 hover:shadow-2xl hover:-translate-y-2.5 ${item.border} transition-all duration-350 card-hover card-glow group animate-fade-up`}
-                  style={{ animationDelay: `${i * 80}ms` }}
-                >
-                  <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${item.iconBg} flex items-center justify-center mx-auto mb-5 text-white shadow-xl ${item.iconShadow} group-hover:scale-110 group-hover:shadow-2xl transition-all duration-300`}>
-                    {item.icon === "calendar" && (
-                      <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                    )}
-                    {item.icon === "clock" && (
-                      <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    )}
-                    {item.icon === "document" && (
-                      <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      </svg>
-                    )}
-                  </div>
-                  <h3 className="text-base font-semibold text-slate-900 mb-2">
-                    {item.icon === "calendar" && "Connect your calendar"}
-                    {item.icon === "clock" && "Find overlap automatically"}
-                    {item.icon === "document" && "Generate meeting prep notes"}
-                  </h3>
-                  <p className="text-sm text-slate-600 leading-relaxed">
-                    {item.icon === "calendar" && "Connect Google Calendar and your busy times are blocked—open slots stay visible."}
-                    {item.icon === "clock" && "Enter both time zones and working hours, then get suggested meeting times in one view."}
-                    {item.icon === "document" && "One click to generate your meeting brief—talking points, strengths to highlight, and questions to prepare."}
-                  </p>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </section>
+          {/* Product workflow — 3 steps with UI previews */}
+          <section id="how-it-works" className="relative px-5 sm:px-6 py-20 sm:py-28 scroll-mt-20">
+            <div className="max-w-5xl mx-auto">
+              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#E8EDF5] text-center mb-4">
+                Schedule and prep in one place
+              </h2>
+              <p className="text-[#9FB0C6] text-center max-w-xl mx-auto mb-16 text-sm sm:text-base">
+                Three steps: connect, find overlap, generate your brief.
+              </p>
+              <ol className="space-y-10 sm:space-y-12">
+                {[
+                  {
+                    step: 1,
+                    title: "Connect your calendar",
+                    desc: "Connect Google Calendar so your busy times are blocked and open slots stay visible.",
+                    preview: (
+                      <div className="home-workflow-card rounded-xl p-4 h-full min-h-[120px] flex flex-col justify-center">
+                        <div className="flex items-center gap-2 mb-3">
+                          <div className="w-8 h-8 rounded-lg bg-white/10" />
+                          <div className="h-2 rounded bg-white/10 w-24" />
+                        </div>
+                        <div className="h-9 rounded-lg border border-white/10 bg-white/5 flex items-center justify-center text-[10px] text-[#9FB0C6]">
+                          Connect Google Calendar
+                        </div>
+                        <div className="mt-2 flex gap-1">
+                          <div className="h-1.5 flex-1 rounded bg-white/5" />
+                          <div className="h-1.5 flex-1 rounded bg-white/5" />
+                        </div>
+                      </div>
+                    ),
+                  },
+                  {
+                    step: 2,
+                    title: "Find overlap automatically",
+                    desc: "Enter both time zones and working hours. See overlapping slots in one view and pick a time.",
+                    preview: (
+                      <div className="home-workflow-card rounded-xl p-4 h-full min-h-[120px]">
+                        <div className="grid grid-cols-5 gap-1 mb-2">
+                          {["M", "T", "W", "T", "F"].map((d, i) => (
+                            <div key={i} className="rounded bg-white/5 py-1 text-center text-[9px] text-[#9FB0C6]">{d}</div>
+                          ))}
+                        </div>
+                        <div className="flex gap-1">
+                          <div className="flex-1 flex flex-col gap-0.5">
+                            <div className="h-1.5 rounded bg-amber-500/40" />
+                            <div className="h-1.5 rounded bg-[#ff7a18]/50" />
+                          </div>
+                          {[1, 2, 3, 4].map((i) => (
+                            <div key={i} className="flex-1 flex flex-col gap-0.5">
+                              <div className="h-1.5 rounded bg-white/5" />
+                              <div className="h-1.5 rounded bg-white/5" />
+                            </div>
+                          ))}
+                        </div>
+                        <p className="text-[9px] text-[#6b7c94] mt-2">Your time · Their time</p>
+                      </div>
+                    ),
+                  },
+                  {
+                    step: 3,
+                    title: "Generate meeting prep",
+                    desc: "One click to generate your meeting brief—talking points, strengths to highlight, and questions to prepare.",
+                    preview: (
+                      <div className="home-workflow-card rounded-xl p-4 h-full min-h-[120px]">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="w-6 h-6 rounded bg-[#ff7a18]/20" />
+                          <span className="text-[10px] font-semibold text-[#E8EDF5]">Meeting brief</span>
+                        </div>
+                        <ul className="space-y-1 text-[9px] text-[#9FB0C6]">
+                          <li className="flex gap-1.5"><span className="text-[#ff7a18]">•</span> Talking points</li>
+                          <li className="flex gap-1.5"><span className="text-[#ff7a18]">•</span> Likely questions</li>
+                          <li className="flex gap-1.5"><span className="text-[#ff7a18]">•</span> Strengths to highlight</li>
+                        </ul>
+                        <div className="mt-2 h-6 rounded bg-[#ff7a18]/20 border border-[#ff7a18]/30 flex items-center justify-center">
+                          <span className="text-[9px] font-semibold text-[#ff7a18]">Generate</span>
+                        </div>
+                      </div>
+                    ),
+                  },
+                ].map(({ step, title, desc, preview }) => (
+                  <li key={step} className="flex flex-col sm:flex-row gap-6 sm:gap-8 items-start">
+                    <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-[#ff7a18] text-white flex items-center justify-center text-lg font-bold shadow-lg shadow-[#ff7a18]/25">
+                      {step}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-lg font-semibold text-[#E8EDF5] mb-2">{title}</h3>
+                      <p className="text-sm text-[#9FB0C6] leading-relaxed mb-4">{desc}</p>
+                      <div className="max-w-[280px]">{preview}</div>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          </section>
 
-        {/* How it works */}
-        <section
-          id="how-it-works"
-          className="relative px-5 sm:px-6 py-24 sm:py-28 scroll-mt-6 overflow-hidden section-light border-b border-slate-200/80"
-        >
-          <div className="absolute inset-0 bg-dot-pattern pointer-events-none opacity-50" aria-hidden />
-          <div className="absolute inset-0 bg-signal-lines pointer-events-none opacity-50" aria-hidden />
-          <div className="relative max-w-3xl mx-auto">
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight text-center mb-16">
-              How it works
-            </h2>
-            <ol className="space-y-12">
-              {[
-                { n: 1, title: "Import your calendar", desc: "Connect Google Calendar. Your events block busy times; availability is calculated from your calendar and working hours.", color: "from-blue-600 to-indigo-600", shadow: "shadow-blue-500/30" },
-                { n: 2, title: "Find the best meeting time", desc: "Enter both time zones and working hours. See overlapping slots, choose one, and add it to Google Calendar.", color: "from-cyan-500 to-blue-600", shadow: "shadow-cyan-500/30" },
-                { n: 3, title: "Generate your meeting brief", desc: "Choose meeting type, add context or resume, and generate a brief you can use in the call.", color: "from-violet-500 to-indigo-600", shadow: "shadow-violet-500/30" },
-              ].map(({ n, title, desc, color, shadow }, i) => (
-                <li key={n} className="flex gap-6 items-start animate-fade-up" style={{ animationDelay: `${i * 100}ms` }}>
-                  <span className={`flex-shrink-0 w-16 h-16 rounded-2xl bg-gradient-to-br ${color} text-white flex items-center justify-center text-xl font-bold shadow-xl ${shadow} ring-2 ring-white/30`}>
-                    {n}
-                  </span>
-                  <div>
-                    <h3 className="text-xl font-semibold text-slate-900 mb-2">
-                      {title}
-                    </h3>
-                    <p className="text-slate-600 leading-relaxed">
-                      {desc}
-                    </p>
-                  </div>
-                </li>
-              ))}
-            </ol>
-          </div>
-        </section>
+          {/* Feature highlights — 3 horizontal sections */}
+          <section className="relative px-5 sm:px-6 py-20 sm:py-28">
+            <div className="max-w-5xl mx-auto space-y-24">
+              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#E8EDF5] text-center mb-16">
+                Built for how you work
+              </h2>
 
-        {/* Feature highlights - premium cards with tinted icons */}
-        <section className="relative px-5 sm:px-6 py-24 sm:py-28 overflow-hidden section-tint border-b border-slate-200/80">
-          <div className="absolute inset-0 bg-signal-grid pointer-events-none opacity-60" aria-hidden />
-          <div className="relative max-w-5xl mx-auto">
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight text-center mb-16">
-              Built for how you work
-            </h2>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {[
-                { title: "Google Calendar import", desc: "Your events become busy blocks; open gaps stay visible so you never double-book.", icon: "calendar", iconBg: "from-blue-500 to-indigo-600", iconShadow: "shadow-blue-500/25", cardBg: "from-blue-50/60 to-white" },
-                { title: "Time zone–aware scheduling", desc: "Both time zones and working hours in one place—suggested times shown in each person's local time.", icon: "clock", iconBg: "from-cyan-500 to-blue-600", iconShadow: "shadow-cyan-500/25", cardBg: "from-cyan-50/60 to-white" },
-                { title: "Availability detection", desc: "Working hours minus calendar events = your real free slots, shown in a clear weekly grid.", icon: "grid", iconBg: "from-emerald-500 to-teal-600", iconShadow: "shadow-emerald-500/25", cardBg: "from-emerald-50/60 to-white" },
-                { title: "Meeting brief", desc: "Interview, networking, or general meeting—get talking points, strengths to highlight, and questions to prepare.", icon: "document", iconBg: "from-violet-500 to-indigo-600", iconShadow: "shadow-violet-500/25", cardBg: "from-violet-50/60 to-white" },
-                { title: "Weekly schedule preview", desc: "A visual week view: busy blocks, open gaps, and your selected meeting so you see your week at a glance.", icon: "schedule", iconBg: "from-indigo-500 to-violet-600", iconShadow: "shadow-indigo-500/25", cardBg: "from-indigo-50/60 to-white", wide: true },
-              ].map(({ title, desc, icon, iconBg, iconShadow, cardBg, wide }, i) => (
+                {
+                  title: "Time zone overlap grid",
+                  desc: "See both time zones and working hours in one place. Suggested meeting times appear in each person’s local time so no one has to do the math.",
+                  preview: (
+                    <div className="home-feature-card rounded-2xl overflow-hidden p-4 aspect-[16/10] max-h-[280px] flex">
+                      <div className="flex-1 grid grid-cols-5 gap-2">
+                        {[0, 1, 2, 3, 4].map((c) => (
+                          <div key={c} className="rounded-lg bg-white/5 border border-white/5 p-2 flex flex-col gap-1">
+                            <div className="text-[10px] font-medium text-[#9FB0C6]">Day {c + 1}</div>
+                            <div className="h-3 rounded bg-amber-500/30" />
+                            <div className="h-3 rounded bg-[#ff7a18]/40" />
+                            <div className="flex-1 min-h-2 rounded bg-white/5" />
+                          </div>
+                        ))}
+                      </div>
+                      <div className="w-1/4 rounded-lg bg-[#111827] border border-white/5 p-2 flex flex-col justify-center items-center">
+                        <span className="text-[10px] text-[#ff7a18] font-semibold">Selected</span>
+                      </div>
+                    </div>
+                  ),
+                },
+                {
+                  title: "Side panel event creation",
+                  desc: "Pick a slot and add the event without leaving the page. Meeting title, notes, attendees, and duration—then create in Google Calendar or open the link.",
+                  preview: (
+                    <div className="home-feature-card rounded-2xl overflow-hidden p-4 aspect-[16/10] max-h-[280px] flex gap-3">
+                      <div className="flex-1 rounded-lg bg-white/5 border border-white/5 p-3 space-y-2">
+                        <div className="h-2 rounded bg-white/10 w-1/3" />
+                        <div className="h-2 rounded bg-white/5 w-full" />
+                        <div className="h-2 rounded bg-white/5 w-2/3" />
+                      </div>
+                      <div className="w-2/5 rounded-lg bg-[#111827] border border-white/10 p-3 flex flex-col gap-2">
+                        <div className="h-2 rounded bg-white/10 w-full" />
+                        <div className="h-2 rounded bg-white/5 w-full" />
+                        <div className="mt-auto h-8 rounded-lg bg-[#ff7a18]/30 border border-[#ff7a18]/50 flex items-center justify-center">
+                          <span className="text-xs font-semibold text-[#ff7a18]">Create event</span>
+                        </div>
+                      </div>
+                    </div>
+                  ),
+                },
+                {
+                  title: "AI meeting prep output",
+                  desc: "Get a structured brief: meeting overview, talking points, likely questions, strengths to highlight, and topics to review. Tailored for interviews, networking, and team meetings.",
+                  preview: (
+                    <div className="home-feature-card rounded-2xl overflow-hidden p-4 aspect-[16/10] max-h-[280px] flex flex-col">
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="w-8 h-8 rounded-lg bg-[#ff7a18]/20" />
+                        <span className="text-sm font-semibold text-[#E8EDF5]">Meeting brief</span>
+                      </div>
+                      <div className="flex-1 grid grid-cols-2 gap-2 text-[10px] text-[#9FB0C6]">
+                        <div className="rounded bg-white/5 p-2">Overview</div>
+                        <div className="rounded bg-white/5 p-2">Talking points</div>
+                        <div className="rounded bg-white/5 p-2">Questions</div>
+                        <div className="rounded bg-white/5 p-2">Strengths</div>
+                      </div>
+                    </div>
+                  ),
+                },
+              ].map(({ title, desc, preview }, i) => (
                 <div
                   key={title}
-                  className={`group rounded-2xl border-2 border-slate-200/90 bg-gradient-to-br ${cardBg} p-6 shadow-xl shadow-slate-900/8 hover:shadow-2xl card-hover card-glow ${wide ? "sm:col-span-2 lg:col-span-1" : ""} animate-fade-up`}
-                  style={{ animationDelay: `${i * 60}ms` }}
+                  className={`flex flex-col ${i % 2 === 1 ? "lg:flex-row-reverse" : "lg:flex-row"} gap-8 lg:gap-12 items-center`}
                 >
-                  <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${iconBg} flex items-center justify-center mb-4 shadow-xl ${iconShadow} ring-2 ring-white/20 group-hover:scale-105 group-hover:shadow-2xl transition-all duration-300`}>
-                    {icon === "calendar" && <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>}
-                    {icon === "clock" && <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
-                    {icon === "grid" && <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" /></svg>}
-                    {icon === "document" && <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>}
-                    {icon === "schedule" && <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" /></svg>}
+                  <div className="flex-1 min-w-0 w-full">
+                    <h3 className="text-xl font-semibold text-[#E8EDF5] mb-3">{title}</h3>
+                    <p className="text-sm text-[#9FB0C6] leading-relaxed">{desc}</p>
                   </div>
-                  <h3 className="text-base font-semibold text-slate-900 mb-2">
-                    {title}
-                  </h3>
-                  <p className="text-sm text-slate-600 leading-relaxed">
-                    {desc}
-                  </p>
+                  <div className="flex-1 w-full max-w-lg">{preview}</div>
                 </div>
               ))}
             </div>
-          </div>
-        </section>
+          </section>
 
-        {/* Final CTA - strong glow and hierarchy */}
-        <section className="relative px-5 sm:px-6 py-32 sm:py-40 overflow-hidden section-accent border-t border-slate-200/80">
-          <div className="absolute inset-0 bg-hero-gradient pointer-events-none opacity-100" aria-hidden />
-          <div className="absolute inset-0 bg-dot-pattern pointer-events-none opacity-25" aria-hidden />
-          <div className="absolute bottom-1/4 left-1/2 -translate-x-1/2 w-[32rem] h-48 rounded-full blur-[100px] opacity-40 pointer-events-none bg-blue-400/30" aria-hidden />
-          <div className="absolute bottom-1/3 right-1/4 w-64 h-64 rounded-full blur-[80px] opacity-25 pointer-events-none bg-violet-400/25" aria-hidden />
-          <div className="relative max-w-2xl mx-auto text-center">
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-extrabold text-slate-900 tracking-tight">
-              Ready to schedule and prep?
-            </h2>
-            <p className="mt-6 text-lg sm:text-xl text-slate-700 leading-relaxed font-medium">
-              Built for students, job seekers, and professionals scheduling
-              interviews, networking calls, and remote meetings.
-            </p>
-            <div className="mt-14 relative inline-block">
-              <div className="absolute -inset-4 rounded-2xl bg-blue-500/20 blur-2xl pointer-events-none" aria-hidden />
-              <Link
-                href="/schedule"
-                className={`${primaryButtonClass} relative inline-flex`}
-              >
-                Open SyncPrep
+          {/* Final CTA */}
+          <section className="relative px-5 sm:px-6 py-24 sm:py-32">
+            <div className="absolute inset-0 bg-gradient-to-t from-[#ff7a18]/05 via-transparent to-transparent pointer-events-none" aria-hidden />
+            <div className="relative max-w-2xl mx-auto text-center">
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-[#E8EDF5]">
+                Ready to schedule and prep?
+              </h2>
+              <p className="mt-6 text-base sm:text-lg text-[#9FB0C6] leading-relaxed">
+                Built for students, job seekers, and professionals scheduling interviews, networking calls, and remote meetings.
+              </p>
+              <div className="mt-12">
+                <Link
+                  href="/schedule"
+                  className="inline-flex items-center justify-center min-h-[56px] rounded-xl px-10 py-4 text-base font-semibold bg-[#ff7a18] text-white hover:bg-[#e66d0f] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff7a18]/50 focus-visible:ring-offset-2 ring-offset-[#0c0f18] transition-all duration-200 shadow-xl shadow-[#ff7a18]/25 hover:shadow-[#ff7a18]/30"
+                >
+                  Open app
+                </Link>
+              </div>
+            </div>
+          </section>
+        </main>
+
+        <footer className="border-t border-white/5 py-6 bg-[#080b12]/80">
+          <div className="max-w-6xl mx-auto px-5 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-6">
+              <span className="text-sm font-semibold text-[#E8EDF5]">SyncPrep</span>
+              <Link href="/privacy" className="text-sm text-[#9FB0C6] hover:text-[#E8EDF5] transition-colors">
+                Privacy
+              </Link>
+              <Link href="/terms" className="text-sm text-[#9FB0C6] hover:text-[#E8EDF5] transition-colors">
+                Terms
               </Link>
             </div>
-          </div>
-        </section>
-      </main>
-
-      {/* Footer */}
-      <footer className="border-t border-slate-200 bg-white/95 backdrop-blur-sm py-6">
-        <div className="max-w-6xl mx-auto px-5 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-6">
-            <span className="text-sm font-semibold text-slate-800">SyncPrep</span>
-            <Link
-              href="/privacy"
-              className="text-sm text-slate-500 hover:text-slate-800 transition-colors font-medium"
-            >
-              Privacy
-            </Link>
-            <Link
-              href="/terms"
-              className="text-sm text-slate-500 hover:text-slate-800 transition-colors font-medium"
-            >
-              Terms
+            <Link href="/schedule" className="text-sm font-medium text-[#9FB0C6] hover:text-[#ff7a18] transition-colors">
+              Open app →
             </Link>
           </div>
-          <Link
-            href="/schedule"
-            className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
-          >
-            Open app →
-          </Link>
-        </div>
-      </footer>
+        </footer>
+      </div>
     </div>
   );
 }
