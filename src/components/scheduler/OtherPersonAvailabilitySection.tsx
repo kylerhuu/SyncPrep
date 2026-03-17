@@ -1,11 +1,21 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { OtherPersonWindow, WeeklyPattern, Weekday, TimeWindow } from "@/types";
 import { validateTimeWindow } from "@/lib/timezone";
 import { isValidZone } from "@/lib/timezone";
-import { normalizeDraftToWindows, type NormalizeDraftStats } from "@/lib/availability-draft";
+import {
+  normalizeDraftToWindows,
+  type NormalizeDraftStats,
+  type DraftReviewWindow,
+  type ParsedDraftWindow,
+} from "@/lib/availability-draft";
 import type { ScheduleDayOption } from "@/lib/availability-draft";
+import type { ConfidenceBreakdown, ScreenshotParseDebug, ParsedBusyInterval, DayCoverage } from "@/lib/screenshot-parse";
+import {
+  createDefaultScreenshotWorkingHours,
+  deriveAvailabilityFromBusyMap,
+} from "@/lib/screenshot-availability";
 import { TimezoneInput } from "@/components/scheduler/TimezoneInput";
 import { Card } from "@/components/ui/Card";
 import { UserIcon, PlusIcon, TrashIcon, UploadIcon } from "@/components/ui/Icons";
@@ -27,6 +37,29 @@ interface OtherPersonAvailabilitySectionProps {
   onWindowsChange: (windows: OtherPersonWindow[]) => void;
   weeklyPattern: WeeklyPattern;
   onWeeklyPatternChange: (pattern: WeeklyPattern) => void;
+}
+
+interface ParseScreenshotResponse {
+  busyByDate?: Record<string, ParsedBusyInterval[]>;
+  dayCoverage?: Record<string, DayCoverage>;
+  partial?: boolean;
+  message?: string;
+  warnings?: string[];
+  parseType?: string;
+  confidence?: ConfidenceBreakdown;
+  debug?: ScreenshotParseDebug;
+  rawDebug?: {
+    primaryParsed: Record<string, unknown> | null;
+    fallbackParsed: Record<string, unknown> | null;
+    columnParses?: Array<{
+      date: string | null;
+      startX?: number;
+      endX?: number;
+      parsed: Record<string, unknown> | null;
+    }>;
+  };
+  stats?: { totalParsed: number; normalized: number; skipped: number };
+  error?: string;
 }
 
 function nextId(): string {
@@ -64,7 +97,12 @@ function getWeekdayFromDate(dateStr: string): Weekday {
   return keys[idx];
 }
 
-type InputTab = "manual" | "screenshot";
+function getCoverageTone(coverage: DayCoverage): string {
+  if (coverage === "confirmed") return "bg-emerald-100 text-emerald-700";
+  if (coverage === "partial") return "bg-amber-100 text-amber-700";
+  return "bg-slate-200 text-slate-600";
+}
+
 const WEEKDAYS: { key: Weekday; label: string; short: string }[] = [
   { key: "Sunday", label: "Sunday", short: "Sun" },
   { key: "Monday", label: "Monday", short: "Mon" },
@@ -77,7 +115,6 @@ const WEEKDAYS: { key: Weekday; label: string; short: string }[] = [
 
 type InputTabExtended = "manual" | "weekly" | "screenshot";
 type ScreenshotState = "idle" | "uploading" | "review" | "error";
-
 export function OtherPersonAvailabilitySection({
   scheduleDays,
   zoneB,
@@ -94,9 +131,28 @@ export function OtherPersonAvailabilitySection({
 
   const [inputTab, setInputTab] = useState<InputTabExtended>("weekly");
   const [screenshotState, setScreenshotState] = useState<ScreenshotState>("idle");
-  const [draftWindows, setDraftWindows] = useState<OtherPersonWindow[]>([]);
+  const [draftWindows, setDraftWindows] = useState<DraftReviewWindow[]>([]);
   const [parseError, setParseError] = useState<string | null>(null);
   const [parsePartial, setParsePartial] = useState(false);
+  const [parseWarnings, setParseWarnings] = useState<string[]>([]);
+  const [parseType, setParseType] = useState<string | null>(null);
+  const [parseConfidence, setParseConfidence] = useState<ConfidenceBreakdown | null>(null);
+  const [parseDebug, setParseDebug] = useState<ScreenshotParseDebug | null>(null);
+  const [parseRawDebug, setParseRawDebug] = useState<{
+    primaryParsed: Record<string, unknown> | null;
+    fallbackParsed: Record<string, unknown> | null;
+    columnParses?: Array<{
+      date: string | null;
+      startX?: number;
+      endX?: number;
+      parsed: Record<string, unknown> | null;
+    }>;
+  } | null>(null);
+  const [parsedBusyByDate, setParsedBusyByDate] = useState<Record<string, ParsedBusyInterval[]>>({});
+  const [parsedDayCoverage, setParsedDayCoverage] = useState<Record<string, DayCoverage>>({});
+  const [screenshotWorkingHours, setScreenshotWorkingHours] = useState<WeeklyPattern>(
+    createDefaultScreenshotWorkingHours()
+  );
   const [isDragging, setIsDragging] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -105,6 +161,31 @@ export function OtherPersonAvailabilitySection({
   const [draftStats, setDraftStats] = useState<NormalizeDraftStats | null>(null);
   const [apiFailed, setApiFailed] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const recomputeDraftFromParsed = useCallback(
+    (
+      busyByDate: Record<string, ParsedBusyInterval[]>,
+      dayCoverage: Record<string, DayCoverage>,
+      workingHours: WeeklyPattern
+    ) => {
+      const derived = deriveAvailabilityFromBusyMap({
+        busyByDate,
+        dayCoverage,
+        workingHours,
+      });
+      const rawDraft: ParsedDraftWindow[] = derived.draft.map((window) => ({
+        ...window,
+        warnings: [...(window.warnings ?? []), ...derived.warnings],
+      }));
+      const { windows: normalizedWindows, stats: normStats } = normalizeDraftToWindows(
+        rawDraft,
+        scheduleDays
+      );
+      setDraftWindows(normalizedWindows);
+      setDraftStats(normStats);
+    },
+    [scheduleDays]
+  );
 
   const addWindow = useCallback(() => {
     const firstDate = scheduleDays[0]?.date ?? "";
@@ -131,7 +212,7 @@ export function OtherPersonAvailabilitySection({
   );
 
   const updateDraftWindow = useCallback(
-    (id: string, patch: Partial<Omit<OtherPersonWindow, "id">>) => {
+    (id: string, patch: Partial<Omit<DraftReviewWindow, "id">>) => {
       setDraftWindows((prev) =>
         prev.map((w) => (w.id === id ? { ...w, ...patch } : w))
       );
@@ -147,15 +228,32 @@ export function OtherPersonAvailabilitySection({
     const firstDate = scheduleDays[0]?.date ?? "";
     setDraftWindows((prev) => [
       ...prev,
-      { id: nextId(), date: firstDate, start: "09:00", end: "17:00" },
+      {
+        id: nextId(),
+        date: firstDate,
+        mappedDate: firstDate,
+        mappedMode: "exact",
+        start: "09:00",
+        end: "17:00",
+      },
     ]);
   }, [scheduleDays]);
 
   const confirmDraft = useCallback(() => {
-    onWindowsChange([...windows, ...draftWindows]);
+    const inRangeDraftWindows: OtherPersonWindow[] = draftWindows
+      .filter((w) => w.mappedMode === "exact" && w.mappedDate != null)
+      .map(({ id, mappedDate, start, end, draftMeta }) => ({
+        id,
+        date: mappedDate!,
+        start,
+        end,
+        draftMeta,
+      }));
+    onWindowsChange([...windows, ...inRangeDraftWindows]);
     const merged: WeeklyPattern = { ...weeklyPattern };
     for (const w of draftWindows) {
       if (!w.date?.trim() || !w.start || !w.end) continue;
+      if (w.mappedMode === "exact") continue;
       const weekday = getWeekdayFromDate(w.date);
       const existing = merged[weekday] ?? [];
       merged[weekday] = [...existing, { start: w.start, end: w.end }];
@@ -168,6 +266,13 @@ export function OtherPersonAvailabilitySection({
     setUploadedFile(null);
     setDraftStats(null);
     setApiStats(null);
+    setParseWarnings([]);
+    setParseType(null);
+    setParseConfidence(null);
+    setParseDebug(null);
+    setParseRawDebug(null);
+    setParsedBusyByDate({});
+    setParsedDayCoverage({});
     if (previewUrl) {
       URL.revokeObjectURL(previewUrl);
       setPreviewUrl(null);
@@ -183,6 +288,12 @@ export function OtherPersonAvailabilitySection({
     setUploadedFile(null);
     setDraftStats(null);
     setApiStats(null);
+    setParseWarnings([]);
+    setParseType(null);
+    setParseConfidence(null);
+    setParseDebug(null);
+    setParsedBusyByDate({});
+    setParsedDayCoverage({});
     if (previewUrl) {
       URL.revokeObjectURL(previewUrl);
       setPreviewUrl(null);
@@ -224,7 +335,7 @@ export function OtherPersonAvailabilitySection({
           method: "POST",
           body: formData,
         });
-        const data = await res.json().catch(() => ({}));
+        const data = await res.json().catch(() => ({} as ParseScreenshotResponse));
         if (!res.ok) {
           setParseError(
             typeof data.error === "string"
@@ -235,15 +346,59 @@ export function OtherPersonAvailabilitySection({
           setApiFailed(true);
           setApiStats(null);
           setDraftStats(null);
+          setParseWarnings([]);
+          setParseType(null);
+          setParseConfidence(null);
+          setParseDebug(null);
+          setParseRawDebug(null);
+          setParsedBusyByDate({});
+          setParsedDayCoverage({});
           return;
         }
-        const rawDraft = Array.isArray(data.draft) ? data.draft : [];
-        const { windows: normalizedWindows, stats: normStats } = normalizeDraftToWindows(rawDraft, scheduleDays);
-        setDraftWindows(normalizedWindows);
-        setDraftStats(normStats);
-        setApiStats(data.stats ?? null);
+        const busyByDate =
+          data.busyByDate && typeof data.busyByDate === "object" ? data.busyByDate : {};
+        const dayCoverage =
+          data.dayCoverage && typeof data.dayCoverage === "object" ? data.dayCoverage : {};
+        setParsedBusyByDate(busyByDate);
+        setParsedDayCoverage(dayCoverage);
+        recomputeDraftFromParsed(busyByDate, dayCoverage, screenshotWorkingHours);
+        setApiStats(
+          data.stats && typeof data.stats === "object"
+            ? (data.stats as { totalParsed: number; normalized: number; skipped: number })
+            : null
+        );
         setParsePartial(Boolean(data.partial));
         setParseError(typeof data.message === "string" ? data.message : null);
+        setParseWarnings(
+          Array.isArray(data.warnings)
+            ? data.warnings.filter((item: unknown): item is string => typeof item === "string")
+            : []
+        );
+        setParseType(typeof data.parseType === "string" ? data.parseType : null);
+        setParseConfidence(
+          data.confidence && typeof data.confidence === "object"
+            ? (data.confidence as ConfidenceBreakdown)
+            : null
+        );
+        setParseDebug(
+          data.debug && typeof data.debug === "object"
+            ? (data.debug as ScreenshotParseDebug)
+            : null
+        );
+        setParseRawDebug(
+          data.rawDebug && typeof data.rawDebug === "object"
+            ? (data.rawDebug as {
+                primaryParsed: Record<string, unknown> | null;
+                fallbackParsed: Record<string, unknown> | null;
+                columnParses?: Array<{
+                  date: string | null;
+                  startX?: number;
+                  endX?: number;
+                  parsed: Record<string, unknown> | null;
+                }>;
+              })
+            : null
+        );
         setScreenshotState("review");
       } catch {
         setParseError(
@@ -253,10 +408,29 @@ export function OtherPersonAvailabilitySection({
         setApiFailed(true);
         setApiStats(null);
         setDraftStats(null);
+        setParseWarnings([]);
+        setParseType(null);
+        setParseConfidence(null);
+        setParseDebug(null);
+        setParseRawDebug(null);
+        setParsedBusyByDate({});
+        setParsedDayCoverage({});
       }
     },
-    [scheduleDays, previewUrl]
+    [previewUrl, recomputeDraftFromParsed, scheduleDays, screenshotWorkingHours]
   );
+
+  useEffect(() => {
+    if (screenshotState !== "review") return;
+    if (Object.keys(parsedBusyByDate).length === 0 && Object.keys(parsedDayCoverage).length === 0) return;
+    recomputeDraftFromParsed(parsedBusyByDate, parsedDayCoverage, screenshotWorkingHours);
+  }, [
+    parsedBusyByDate,
+    parsedDayCoverage,
+    recomputeDraftFromParsed,
+    screenshotState,
+    screenshotWorkingHours,
+  ]);
 
   const hasOverlapWarning = (() => {
     const list = inputTab === "screenshot" && screenshotState === "review" ? draftWindows : windows;
@@ -276,14 +450,6 @@ export function OtherPersonAvailabilitySection({
     return false;
   })();
 
-  const windowsToShow =
-    inputTab === "screenshot" && screenshotState === "review"
-      ? draftWindows
-      : windows;
-  const setWindowsToShow =
-    inputTab === "screenshot" && screenshotState === "review"
-      ? setDraftWindows
-      : onWindowsChange;
   const updateWindowToShow =
     inputTab === "screenshot" && screenshotState === "review"
       ? updateDraftWindow
@@ -292,35 +458,69 @@ export function OtherPersonAvailabilitySection({
     inputTab === "screenshot" && screenshotState === "review"
       ? removeDraftWindow
       : removeWindow;
-  const addWindowToShow =
-    inputTab === "screenshot" && screenshotState === "review"
-      ? addDraftWindow
-      : addWindow;
-
-  const renderWindowList = (list: OtherPersonWindow[]) => (
+  const renderWindowList = (list: Array<OtherPersonWindow | DraftReviewWindow>) => (
     <ul className="space-y-3">
       {list.map((w) => {
-        const error = validateWindow(w, scheduleDates);
+        const validationTarget =
+          "mappedDate" in w && w.mappedDate != null ? { ...w, date: w.mappedDate } : w;
+        const error =
+          "mappedDate" in w && w.mappedDate == null
+            ? null
+            : validateWindow(validationTarget, scheduleDates);
+        const mappedDate = "mappedDate" in w ? w.mappedDate : w.date;
+        const hasDraftWarning = Boolean(w.draftMeta?.uncertainDate || w.draftMeta?.uncertainTime || (w.draftMeta?.warnings?.length ?? 0) > 0);
         return (
           <li
             key={w.id}
-            className="rounded-xl border-2 border-slate-200 bg-white p-3 shadow-sm"
+            className={`rounded-xl border-2 bg-white p-3 shadow-sm ${
+              hasDraftWarning ? "border-amber-300" : "border-slate-200"
+            }`}
           >
+            {w.draftMeta && (
+              <div className="mb-2 flex flex-wrap items-center gap-2">
+                {typeof w.draftMeta.overallConfidence === "number" && (
+                  <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600">
+                    Confidence {(w.draftMeta.overallConfidence * 100).toFixed(0)}%
+                  </span>
+                )}
+                {w.draftMeta.uncertainDate && (
+                  <span className="rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-medium text-amber-700">
+                    Uncertain day
+                  </span>
+                )}
+                {w.draftMeta.uncertainTime && (
+                  <span className="rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-medium text-amber-700">
+                    Uncertain time
+                  </span>
+                )}
+              </div>
+            )}
             <div className="flex flex-wrap items-end gap-2 sm:gap-3">
               <div className="flex-1 min-w-[100px]">
                 <label className="sr-only">Day</label>
-                <select
-                  value={w.date}
-                  onChange={(e) => updateWindowToShow(w.id, { date: e.target.value })}
-                  className={inputClass}
-                  aria-invalid={!!error}
-                >
-                  {scheduleDays.map((d) => (
-                    <option key={d.date} value={d.date}>
-                      {d.label}
-                    </option>
-                  ))}
-                </select>
+                {mappedDate ? (
+                  <select
+                    value={mappedDate}
+                    onChange={(e) =>
+                      updateWindowToShow(w.id, {
+                        date: e.target.value,
+                        mappedDate: e.target.value,
+                      })
+                    }
+                    className={inputClass}
+                    aria-invalid={!!error}
+                  >
+                    {scheduleDays.map((d) => (
+                      <option key={d.date} value={d.date}>
+                        {d.label}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <div className="rounded-xl border-2 border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
+                    {w.date}
+                  </div>
+                )}
               </div>
               <div className="flex-1 min-w-[90px]">
                 <label className="sr-only">Start time</label>
@@ -352,10 +552,24 @@ export function OtherPersonAvailabilitySection({
                 <TrashIcon />
               </button>
             </div>
-            {error && (
+            {error && mappedDate && (
               <p className="text-xs text-red-600 mt-1.5" role="alert">
                 {error}
               </p>
+            )}
+            {!mappedDate && (
+              <p className="mt-1.5 text-xs text-slate-500">
+                Outside the current scheduling range. This row will be imported as a recurring weekly pattern.
+              </p>
+            )}
+            {!error && w.draftMeta?.warnings && w.draftMeta.warnings.length > 0 && (
+              <ul className="mt-2 space-y-1">
+                {w.draftMeta.warnings.slice(0, 2).map((warning, index) => (
+                  <li key={`${w.id}-warning-${index}`} className="text-xs text-amber-700">
+                    {warning}
+                  </li>
+                ))}
+              </ul>
             )}
           </li>
         );
@@ -369,12 +583,12 @@ export function OtherPersonAvailabilitySection({
       icon={<UserIcon />}
       className="border-2 border-emerald-200/80 bg-gradient-to-br from-emerald-50/40 to-white"
     >
-      <p className="text-sm text-slate-600 mb-4">
+      <p className="mb-6 text-sm text-slate-600">
         Add when the other person is available. We&apos;ll find times that work
         for both of you.
       </p>
 
-      <div className="space-y-4">
+      <div className="space-y-7">
         <TimezoneInput
           label="Their time zone (or city)"
           value={zoneB}
@@ -384,7 +598,7 @@ export function OtherPersonAvailabilitySection({
         />
 
         <div>
-          <div className="flex border-b border-slate-200 mb-4">
+          <div className="mb-6 flex border-b border-slate-200">
             <button
               type="button"
               onClick={() => setInputTab("weekly")}
@@ -394,7 +608,7 @@ export function OtherPersonAvailabilitySection({
                   : "text-slate-600 hover:text-slate-900"
               }`}
             >
-              Weekly
+              Weekly pattern
             </button>
             <button
               type="button"
@@ -419,7 +633,7 @@ export function OtherPersonAvailabilitySection({
                   : "text-slate-600 hover:text-slate-900"
               }`}
             >
-              Screenshot upload
+              Screenshot import
             </button>
           </div>
 
@@ -462,7 +676,7 @@ export function OtherPersonAvailabilitySection({
           )}
 
           {inputTab === "weekly" && (
-            <div className="space-y-3">
+            <div className="space-y-5">
               <p className="text-sm text-slate-600">
                 Define recurring weekly availability by weekday. These windows apply to matching days
                 in the current scheduling range.
@@ -563,9 +777,83 @@ export function OtherPersonAvailabilitySection({
 
           {inputTab === "screenshot" && (
             <>
+              <div className="mb-8 space-y-5 rounded-2xl border border-slate-200 bg-slate-50/80 p-5">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-800">
+                      Working hours baseline
+                    </p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      Screenshot import only detects confirmed busy times. Availability is derived from these weekly working hours.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setScreenshotWorkingHours(createDefaultScreenshotWorkingHours())}
+                    className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                  >
+                    Reset to 9-5
+                  </button>
+                </div>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  {WEEKDAYS.map(({ key, short }) => {
+                    const activeWindow = screenshotWorkingHours[key]?.[0] ?? null;
+                    return (
+                      <div key={`screenshot-hours-${key}`} className="rounded-xl border border-slate-200 bg-white p-3.5">
+                        <div className="mb-2 flex items-center justify-between">
+                          <p className="text-sm font-medium text-slate-800">{short}</p>
+                          <label className="inline-flex items-center gap-2 text-xs text-slate-600">
+                            <input
+                              type="checkbox"
+                              checked={activeWindow != null}
+                              onChange={(e) =>
+                                setScreenshotWorkingHours((prev) => ({
+                                  ...prev,
+                                  [key]: e.target.checked ? [{ start: "09:00", end: "17:00" }] : [],
+                                }))
+                              }
+                            />
+                            Use day
+                          </label>
+                        </div>
+                        {activeWindow ? (
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="time"
+                              value={activeWindow.start}
+                              onChange={(e) =>
+                                setScreenshotWorkingHours((prev) => ({
+                                  ...prev,
+                                  [key]: [{ ...activeWindow, start: e.target.value }],
+                                }))
+                              }
+                              className={inputClass}
+                            />
+                            <span className="text-slate-400 text-xs">to</span>
+                            <input
+                              type="time"
+                              value={activeWindow.end}
+                              onChange={(e) =>
+                                setScreenshotWorkingHours((prev) => ({
+                                  ...prev,
+                                  [key]: [{ ...activeWindow, end: e.target.value }],
+                                }))
+                              }
+                              className={inputClass}
+                            />
+                          </div>
+                        ) : (
+                          <p className="text-xs text-slate-500">Ignored when deriving availability.</p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
               {screenshotState === "idle" && (
                 <div
-                  className={`rounded-xl border-2 border-dashed py-10 px-4 text-center transition-colors ${
+                  className={`rounded-2xl border-2 border-dashed px-6 py-14 text-center transition-colors ${
                     isDragging
                       ? "border-emerald-400 bg-emerald-50/50"
                       : "border-slate-300 bg-slate-50/80"
@@ -585,14 +873,18 @@ export function OtherPersonAvailabilitySection({
                     if (file) handleFileSelect(file);
                   }}
                 >
-                  <UploadIcon />
-                  <p className="text-sm font-medium text-slate-700 mt-2">
-                    Upload a screenshot to generate draft availability
+                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-slate-300 bg-white/70 text-slate-500">
+                    <span className="[&_svg]:h-8 [&_svg]:w-8">
+                      <UploadIcon />
+                    </span>
+                  </div>
+                  <p className="mt-5 text-base font-semibold text-slate-700">
+                    Drag and drop a screenshot here
                   </p>
-                  <p className="text-xs text-slate-500 mt-1">
-                    We&apos;ll detect time windows for you to review and edit before using.
+                  <p className="mt-2 text-sm text-slate-500">
+                    Or choose an image file to detect busy blocks, then derive draft availability from your weekly working hours.
                   </p>
-                  <div className="mt-4 mx-auto max-w-sm text-left rounded-lg border border-slate-200 bg-white/60 px-3 py-2.5">
+                  <div className="mt-6 mx-auto max-w-sm rounded-lg border border-slate-200 bg-white/60 px-3 py-2.5 text-left">
                     <p className="text-xs font-semibold text-slate-600 mb-1.5">
                       For best results, your screenshot should:
                     </p>
@@ -620,7 +912,7 @@ export function OtherPersonAvailabilitySection({
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="mt-4 inline-flex items-center gap-2 rounded-xl border-2 border-emerald-300 bg-emerald-50 px-4 py-2.5 text-sm font-medium text-emerald-800 hover:bg-emerald-100"
+                    className="mt-6 inline-flex items-center gap-2 rounded-xl border-2 border-emerald-300 bg-emerald-50 px-5 py-3 text-sm font-medium text-emerald-800 hover:bg-emerald-100"
                   >
                     <UploadIcon />
                     Choose image
@@ -632,7 +924,7 @@ export function OtherPersonAvailabilitySection({
                 <div className="rounded-xl border-2 border-slate-200 bg-slate-50/80 py-10 flex flex-col items-center justify-center gap-3">
                   <LoadingSpinner label="Reading screenshot…" />
                   <p className="text-xs text-slate-500">
-                    Review detected times before using them.
+                    Extracting confirmed busy times before deriving availability.
                   </p>
                 </div>
               )}
@@ -663,16 +955,87 @@ export function OtherPersonAvailabilitySection({
                       </div>
                     </div>
                   )}
-                  <p className="text-sm font-medium text-slate-700">
-                    {draftWindows.length > 0
-                      ? "We detected these time windows from the screenshot"
-                      : "Parsing complete"}
-                  </p>
+                  <div className="space-y-1">
+                    <p className="text-sm font-semibold text-slate-800">
+                      Busy times extracted from screenshot
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      Only confirmed busy blocks are used. The availability list below is derived from the working-hours baseline above.
+                    </p>
+                  </div>
+                  <div className="rounded-lg border border-slate-200 bg-slate-50/80 px-3 py-3">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+                      Confirmed busy intervals
+                    </p>
+                    {Object.keys(parsedBusyByDate).length > 0 ? (
+                      <ul className="mt-2 space-y-2">
+                        {Object.entries(parsedBusyByDate).map(([date, intervals]) => (
+                          <li
+                            key={`busy-${date}`}
+                            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700"
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="font-medium">{date}</span>
+                              {parsedDayCoverage[date] && (
+                                <span
+                                  className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${getCoverageTone(parsedDayCoverage[date])}`}
+                                >
+                                  {parsedDayCoverage[date]}
+                                </span>
+                              )}
+                            </div>
+                            <p className="mt-1 text-slate-600">
+                              {intervals.map((interval) => `${interval.start}-${interval.end}`).join(", ")}
+                            </p>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="mt-2 text-xs text-slate-500">
+                        No confirmed busy intervals were extracted.
+                      </p>
+                    )}
+                  </div>
+                  {Object.keys(parsedDayCoverage).length > 0 && (
+                    <div className="rounded-lg border border-slate-200 bg-slate-50/80 px-3 py-3">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+                        Day coverage
+                      </p>
+                      <ul className="mt-2 flex flex-wrap gap-2">
+                        {Object.entries(parsedDayCoverage).map(([date, coverage]) => (
+                          <li
+                            key={`coverage-${date}`}
+                            className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-700"
+                          >
+                            <span className="font-medium">{date}</span>
+                            <span
+                              className={`ml-2 rounded-full px-2 py-0.5 text-[11px] font-medium ${getCoverageTone(coverage)}`}
+                            >
+                              {coverage}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {parseType && (
+                    <p className="text-xs text-slate-500">
+                      Parse mode: {parseType}
+                    </p>
+                  )}
+                  {parseConfidence && (
+                    <div className="grid gap-2 rounded-lg border border-slate-200 bg-slate-50/80 px-3 py-3 text-xs text-slate-600 sm:grid-cols-2">
+                      <p>Headers: {(parseConfidence.header_confidence * 100).toFixed(0)}%</p>
+                      <p>Time axis: {(parseConfidence.time_axis_confidence * 100).toFixed(0)}%</p>
+                      <p>Blocks: {(parseConfidence.block_detection_confidence * 100).toFixed(0)}%</p>
+                      <p>Overall: {(parseConfidence.overall_parse_confidence * 100).toFixed(0)}%</p>
+                    </div>
+                  )}
                   {draftStats && (draftStats.outOfRange > 0 || draftStats.skipped > 0) && (
                     <p className="text-xs text-slate-600 bg-slate-100 border border-slate-200 rounded-lg px-3 py-2">
                       {draftStats.outOfRange > 0 && (
                         <span>
-                          {draftStats.outOfRange} detected window{draftStats.outOfRange !== 1 ? "s were" : " was"} outside the current 7-day range and {draftStats.outOfRange !== 1 ? "were" : "was"} not included.
+                          {draftStats.outOfRange} detected window{draftStats.outOfRange !== 1 ? "s are" : " is"} outside the current 7-day range and {draftStats.outOfRange !== 1 ? "will" : "will"} be imported as recurring weekly availability.
                         </span>
                       )}
                       {draftStats.outOfRange > 0 && draftStats.skipped > 0 && " "}
@@ -690,7 +1053,26 @@ export function OtherPersonAvailabilitySection({
                   )}
                   {parsePartial && (
                     <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-                      We couldn&apos;t confidently extract everything from this screenshot. Please review and edit the entries below, or add missing times manually.
+                      We couldn&apos;t confidently parse the entire screenshot. Uncertain days were left blank instead of guessed.
+                    </p>
+                  )}
+                  {parseWarnings.length > 0 && (
+                    <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-3">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-amber-800">
+                        Warnings
+                      </p>
+                      <ul className="mt-2 space-y-1">
+                        {parseWarnings.map((warning, index) => (
+                          <li key={`parse-warning-${index}`} className="text-xs text-amber-800">
+                            {warning}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {draftStats && draftStats.outOfRange > 0 && (
+                    <p className="text-xs text-slate-600">
+                      This screenshot appears to be for a different week than the current scheduling window. Confirming will preserve derived availability as recurring weekly pattern entries for those days.
                     </p>
                   )}
                   {parseError && (
@@ -698,7 +1080,7 @@ export function OtherPersonAvailabilitySection({
                   )}
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-sm text-slate-600">
-                      Edit any entry, then confirm to use in scheduling.
+                      Review the derived availability below, edit anything needed, then confirm to apply exact-date matches and recurring weekday matches.
                     </span>
                     <button
                       type="button"
@@ -713,13 +1095,13 @@ export function OtherPersonAvailabilitySection({
                     <div className="rounded-xl border-2 border-dashed border-amber-200 bg-amber-50/80 py-6 px-4 text-center space-y-2">
                       <p className="text-sm font-medium text-amber-900">
                         {apiStats && apiStats.totalParsed === 0
-                          ? "No availability was detected in this image."
+                          ? "No confirmed busy times were detected in this image."
                           : draftStats && draftStats.outOfRange > 0
-                            ? "No detected windows fell within the next 7 days."
-                            : "No time windows were detected for the next 7 days."}
+                            ? "Derived availability does not land in the current 7-day range."
+                            : "No confirmed availability could be derived from this screenshot."}
                       </p>
                       <p className="text-xs text-amber-800">
-                        Try another screenshot, or add times manually above. You can also use the Manual entry tab.
+                        The screenshot may be too partial or uncertain. You can adjust working hours, try another image, or add times manually.
                       </p>
                       <button
                         type="button"
@@ -727,11 +1109,18 @@ export function OtherPersonAvailabilitySection({
                         className="mt-2 inline-flex items-center gap-1.5 rounded-xl border-2 border-amber-300 bg-white px-3 py-2 text-sm font-medium text-amber-900 hover:bg-amber-50"
                       >
                         <PlusIcon />
-                        Add window manually
+                        Add availability manually
                       </button>
                     </div>
                   ) : (
-                    renderWindowList(draftWindows)
+                    <div className="space-y-3">
+                      <div className="rounded-lg border border-slate-200 bg-slate-50/80 px-3 py-3">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+                          Derived availability from screenshot + working hours
+                        </p>
+                      </div>
+                      {renderWindowList(draftWindows)}
+                    </div>
                   )}
                   <div className="flex flex-wrap gap-2 pt-2">
                     <button
@@ -741,7 +1130,7 @@ export function OtherPersonAvailabilitySection({
                       className="rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50 disabled:pointer-events-none"
                       title={draftWindows.length === 0 ? "Add at least one time window to use" : "Save these times and use them for scheduling"}
                     >
-                      Use these times
+                      Confirm draft
                     </button>
                     <button
                       type="button"
@@ -782,6 +1171,11 @@ export function OtherPersonAvailabilitySection({
                         setParseError(null);
                         setScreenshotState("idle");
                         setLastSelectedFile(null);
+                        setParseWarnings([]);
+                        setParseType(null);
+                        setParseConfidence(null);
+                        setParseDebug(null);
+                        setParseRawDebug(null);
                         if (previewUrl) {
                           URL.revokeObjectURL(previewUrl);
                           setPreviewUrl(null);
@@ -798,6 +1192,11 @@ export function OtherPersonAvailabilitySection({
                         setParseError(null);
                         setScreenshotState("idle");
                         setLastSelectedFile(null);
+                        setParseWarnings([]);
+                        setParseType(null);
+                        setParseConfidence(null);
+                        setParseDebug(null);
+                        setParseRawDebug(null);
                         setInputTab("manual");
                         if (previewUrl) {
                           URL.revokeObjectURL(previewUrl);
@@ -811,6 +1210,24 @@ export function OtherPersonAvailabilitySection({
                     </button>
                   </div>
                 </div>
+              )}
+
+              {screenshotState === "review" && (parseDebug || parseRawDebug) && (
+                <details className="rounded-lg border border-slate-200 bg-slate-50/80 px-3 py-2">
+                  <summary className="cursor-pointer text-xs font-medium text-slate-600">
+                    Debug details
+                  </summary>
+                  {parseDebug && (
+                    <pre className="mt-2 overflow-auto whitespace-pre-wrap text-[11px] text-slate-600">
+                      {JSON.stringify(parseDebug, null, 2)}
+                    </pre>
+                  )}
+                  {parseRawDebug && (
+                    <pre className="mt-3 overflow-auto whitespace-pre-wrap text-[11px] text-slate-600">
+                      {JSON.stringify(parseRawDebug, null, 2)}
+                    </pre>
+                  )}
+                </details>
               )}
             </>
           )}

@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    },
+    "resolveJsonModule": true,
+    "outDir": ".tmp-tests",
+    "rootDir": ".",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true
+  },
+  "include": [
+    "src/lib/screenshot-parse.ts",
+    "src/lib/screenshot-availability.ts",
+    "src/lib/availability-draft.ts",
+    "src/types/index.ts",
+    "tests/screenshot-parser.test.ts"
+  ]
+}

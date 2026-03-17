@@ -1198,6 +1198,149 @@ body {
     0 0 20px var(--schedule-glow-subtle) !important;
 }
 
+/* Final schedule overrides: darker slate surfaces, blue emphasis, lighter previews */
+.schedule-dark-tech {
+  --schedule-card: rgba(15, 23, 42, 0.7);
+  --schedule-card-inner: rgba(15, 23, 42, 0.82);
+  --schedule-border: rgba(51, 65, 85, 0.95);
+  --schedule-border-strong: rgba(71, 85, 105, 0.95);
+  --schedule-accent: #3b82f6;
+  --schedule-accent-soft: rgba(59, 130, 246, 0.14);
+  --schedule-glow: rgba(59, 130, 246, 0.45);
+  --schedule-glow-subtle: rgba(59, 130, 246, 0.22);
+  --schedule-glow-bloom: rgba(59, 130, 246, 0.16);
+}
+
+.schedule-dark-tech header {
+  background: linear-gradient(
+    180deg,
+    rgba(15, 23, 42, 0.86) 0%,
+    rgba(15, 23, 42, 0.72) 100%
+  ) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.schedule-dark-tech header .nav-cta:hover {
+  background: #2563eb !important;
+}
+
+.schedule-dark-tech main section {
+  background: var(--schedule-card) !important;
+  border-color: var(--schedule-border-strong) !important;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.03) inset,
+    0 12px 28px -18px rgba(0, 0, 0, 0.5) !important;
+}
+
+.schedule-dark-tech .rounded-xl.border,
+.schedule-dark-tech [class*="rounded-xl"][class*="border"],
+.schedule-dark-tech .bg-surface-elevated,
+.schedule-dark-tech .bg-section-ai {
+  background: var(--schedule-card-inner) !important;
+  border-color: var(--schedule-border) !important;
+  box-shadow: 0 10px 20px -18px rgba(0, 0, 0, 0.75) !important;
+}
+
+.schedule-dark-tech .bg-slate-50,
+.schedule-dark-tech .from-slate-50,
+.schedule-dark-tech .from-blue-50,
+.schedule-dark-tech .via-indigo-50 {
+  background: rgba(15, 23, 42, 0.55) !important;
+}
+
+.schedule-dark-tech button.border-2:hover,
+.schedule-dark-tech main button.rounded-xl[role="tab"]:hover,
+.schedule-dark-tech main li button.rounded-xl:hover {
+  border-color: rgba(59, 130, 246, 0.45) !important;
+  box-shadow: 0 0 12px var(--schedule-glow-subtle) !important;
+}
+
+.schedule-dark-tech main button.rounded-xl[role="tab"][aria-selected="true"] {
+  color: white !important;
+  box-shadow:
+    0 0 20px rgba(59, 130, 246, 0.34),
+    0 0 44px rgba(59, 130, 246, 0.12) !important;
+}
+
+.schedule-dark-tech button.rounded-xl.bg-emerald-600,
+.schedule-dark-tech button[class*="bg-emerald"] {
+  color: white !important;
+}
+
+.schedule-dark-tech button.rounded-xl.bg-emerald-600:hover,
+.schedule-dark-tech button[class*="bg-emerald"]:hover {
+  box-shadow:
+    0 0 22px rgba(59, 130, 246, 0.28),
+    0 0 46px rgba(59, 130, 246, 0.1) !important;
+}
+
+.schedule-dark-tech .text-cyan-600,
+.schedule-dark-tech main li button.rounded-xl.border-l-4,
+.schedule-dark-tech main li button.border-l-cyan-500 {
+  color: #bfdbfe !important;
+  border-left-color: rgba(96, 165, 250, 0.72) !important;
+}
+
+.schedule-dark-tech .from-amber-300,
+.schedule-dark-tech .from-emerald-300,
+.schedule-dark-tech .from-cyan-200,
+.schedule-dark-tech .from-blue-500,
+.schedule-dark-tech .via-blue-600 {
+  background: rgba(59, 130, 246, 0.18) !important;
+  border-color: rgba(96, 165, 250, 0.28) !important;
+  box-shadow: none !important;
+}
+
+.schedule-dark-tech .schedule-primary-panel {
+  position: relative;
+  z-index: 2;
+}
+
+.schedule-dark-tech .schedule-primary-panel::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  border: 1px solid rgba(59, 130, 246, 0.22);
+  box-shadow:
+    0 0 0 1px rgba(59, 130, 246, 0.08),
+    0 24px 50px -26px rgba(59, 130, 246, 0.5);
+  pointer-events: none;
+}
+
+.schedule-dark-tech .schedule-medium-panel {
+  background: rgba(15, 23, 42, 0.7) !important;
+  border-color: rgba(51, 65, 85, 0.95) !important;
+}
+
+.schedule-dark-tech .schedule-support-panel,
+.schedule-dark-tech [aria-label="Weekly schedule"] .rounded-2xl.border {
+  opacity: 0.82;
+  transform: scale(0.985);
+  transform-origin: top center;
+}
+
+.schedule-dark-tech [aria-label="Weekly schedule"] .rounded-2xl.border {
+  background: rgba(15, 23, 42, 0.5) !important;
+  border-color: rgba(71, 85, 105, 0.72) !important;
+  box-shadow: 0 8px 20px -14px rgba(0, 0, 0, 0.5) !important;
+}
+
+.schedule-dark-tech [aria-label="Weekly schedule"] .bg-gradient-to-b,
+.schedule-dark-tech [aria-label="Weekly schedule"] [class*="from-slate-50"],
+.schedule-dark-tech [aria-label="Weekly schedule"] [class*="bg-slate-50"],
+.schedule-dark-tech [aria-label="Weekly schedule"] .bg-surface-elevated {
+  background: rgba(15, 23, 42, 0.46) !important;
+}
+
+.schedule-dark-tech .meeting-summary-rail {
+  background: rgba(15, 23, 42, 0.72) !important;
+  border-color: rgba(71, 85, 105, 0.95) !important;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
 /* ========== Homepage (dark product landing) ========== */
 .home-hero-preview {
   background: linear-gradient(180deg, rgba(17, 21, 30, 0.98) 0%, rgba(12, 15, 22, 0.99) 100%);

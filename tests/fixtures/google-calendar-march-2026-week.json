@@ -1,0 +1,58 @@
+{
+  "layout": {
+    "kind": "week_calendar",
+    "confidence": 0.95,
+    "cropped": false
+  },
+  "headers": [
+    { "text": "Sun 15", "columnIndex": 0, "startX": 0.06, "endX": 0.19, "confidence": 0.95, "resolvedDate": "2026-03-15", "resolvedDateConfidence": 0.95 },
+    { "text": "Mon 16", "columnIndex": 1, "startX": 0.19, "endX": 0.32, "confidence": 0.95, "resolvedDate": "2026-03-16", "resolvedDateConfidence": 0.95 },
+    { "text": "Tue 17", "columnIndex": 2, "startX": 0.32, "endX": 0.45, "confidence": 0.97, "resolvedDate": "2026-03-17", "resolvedDateConfidence": 0.97 },
+    { "text": "Wed 18", "columnIndex": 3, "startX": 0.45, "endX": 0.58, "confidence": 0.95, "resolvedDate": "2026-03-18", "resolvedDateConfidence": 0.95 },
+    { "text": "Thu 19", "columnIndex": 4, "startX": 0.58, "endX": 0.71, "confidence": 0.95, "resolvedDate": "2026-03-19", "resolvedDateConfidence": 0.95 },
+    { "text": "Fri 20", "columnIndex": 5, "startX": 0.71, "endX": 0.84, "confidence": 0.95, "resolvedDate": "2026-03-20", "resolvedDateConfidence": 0.95 },
+    { "text": "Sat 21", "columnIndex": 6, "startX": 0.84, "endX": 0.97, "confidence": 0.95, "resolvedDate": "2026-03-21", "resolvedDateConfidence": 0.95 }
+  ],
+  "timeAxis": {
+    "detected": true,
+    "confidence": 0.94,
+    "labels": [
+      { "text": "8 AM", "time": "08:00", "y": 0.04, "confidence": 0.92 },
+      { "text": "9 AM", "time": "09:00", "y": 0.11, "confidence": 0.93 },
+      { "text": "10 AM", "time": "10:00", "y": 0.19, "confidence": 0.93 },
+      { "text": "11 AM", "time": "11:00", "y": 0.27, "confidence": 0.94 },
+      { "text": "12 PM", "time": "12:00", "y": 0.35, "confidence": 0.94 },
+      { "text": "1 PM", "time": "13:00", "y": 0.43, "confidence": 0.94 },
+      { "text": "2 PM", "time": "14:00", "y": 0.51, "confidence": 0.94 },
+      { "text": "3 PM", "time": "15:00", "y": 0.59, "confidence": 0.94 },
+      { "text": "4 PM", "time": "16:00", "y": 0.67, "confidence": 0.94 },
+      { "text": "5 PM", "time": "17:00", "y": 0.75, "confidence": 0.94 },
+      { "text": "6 PM", "time": "18:00", "y": 0.83, "confidence": 0.94 },
+      { "text": "7 PM", "time": "19:00", "y": 0.90, "confidence": 0.93 },
+      { "text": "8 PM", "time": "20:00", "y": 0.96, "confidence": 0.93 }
+    ]
+  },
+  "busyBlocks": [
+    { "x": 0.06, "y": 0.27, "width": 0.12, "height": 0.07, "dayColumnIndex": 0, "date": "2026-03-15", "dateConfidence": 0.92, "timeConfidence": 0.9, "blockConfidence": 0.91, "source": "busy" },
+    { "x": 0.19, "y": 0.35, "width": 0.12, "height": 0.12, "dayColumnIndex": 1, "date": "2026-03-16", "dateConfidence": 0.92, "timeConfidence": 0.91, "blockConfidence": 0.91, "source": "busy" },
+    { "x": 0.19, "y": 0.58, "width": 0.12, "height": 0.03, "dayColumnIndex": 1, "date": "2026-03-16", "dateConfidence": 0.88, "timeConfidence": 0.88, "blockConfidence": 0.86, "source": "busy" },
+    { "x": 0.19, "y": 0.61, "width": 0.12, "height": 0.03, "dayColumnIndex": 1, "date": "2026-03-16", "dateConfidence": 0.88, "timeConfidence": 0.88, "blockConfidence": 0.86, "source": "busy" },
+    { "x": 0.32, "y": 0.27, "width": 0.12, "height": 0.08, "dayColumnIndex": 2, "date": "2026-03-17", "dateConfidence": 0.94, "timeConfidence": 0.92, "blockConfidence": 0.93, "source": "busy" },
+    { "x": 0.32, "y": 0.39, "width": 0.12, "height": 0.09, "dayColumnIndex": 2, "date": "2026-03-17", "dateConfidence": 0.94, "timeConfidence": 0.92, "blockConfidence": 0.93, "source": "busy" },
+    { "x": 0.32, "y": 0.51, "width": 0.12, "height": 0.02, "dayColumnIndex": 2, "date": "2026-03-17", "dateConfidence": 0.88, "timeConfidence": 0.88, "blockConfidence": 0.84, "source": "busy" },
+    { "x": 0.32, "y": 0.66, "width": 0.12, "height": 0.02, "dayColumnIndex": 2, "date": "2026-03-17", "dateConfidence": 0.88, "timeConfidence": 0.88, "blockConfidence": 0.84, "source": "busy" },
+    { "x": 0.32, "y": 0.69, "width": 0.12, "height": 0.09, "dayColumnIndex": 2, "date": "2026-03-17", "dateConfidence": 0.94, "timeConfidence": 0.92, "blockConfidence": 0.93, "source": "busy" },
+    { "x": 0.45, "y": 0.35, "width": 0.12, "height": 0.12, "dayColumnIndex": 3, "date": "2026-03-18", "dateConfidence": 0.94, "timeConfidence": 0.92, "blockConfidence": 0.93, "source": "busy" },
+    { "x": 0.45, "y": 0.51, "width": 0.12, "height": 0.02, "dayColumnIndex": 3, "date": "2026-03-18", "dateConfidence": 0.88, "timeConfidence": 0.88, "blockConfidence": 0.84, "source": "busy" },
+    { "x": 0.45, "y": 0.75, "width": 0.12, "height": 0.07, "dayColumnIndex": 3, "date": "2026-03-18", "dateConfidence": 0.92, "timeConfidence": 0.9, "blockConfidence": 0.9, "source": "busy" },
+    { "x": 0.58, "y": 0.27, "width": 0.12, "height": 0.09, "dayColumnIndex": 4, "date": "2026-03-19", "dateConfidence": 0.94, "timeConfidence": 0.92, "blockConfidence": 0.93, "source": "busy" },
+    { "x": 0.58, "y": 0.39, "width": 0.12, "height": 0.09, "dayColumnIndex": 4, "date": "2026-03-19", "dateConfidence": 0.94, "timeConfidence": 0.92, "blockConfidence": 0.93, "source": "busy" },
+    { "x": 0.58, "y": 0.51, "width": 0.12, "height": 0.02, "dayColumnIndex": 4, "date": "2026-03-19", "dateConfidence": 0.88, "timeConfidence": 0.88, "blockConfidence": 0.84, "source": "busy" },
+    { "x": 0.58, "y": 0.66, "width": 0.12, "height": 0.02, "dayColumnIndex": 4, "date": "2026-03-19", "dateConfidence": 0.88, "timeConfidence": 0.88, "blockConfidence": 0.84, "source": "busy" },
+    { "x": 0.58, "y": 0.69, "width": 0.12, "height": 0.09, "dayColumnIndex": 4, "date": "2026-03-19", "dateConfidence": 0.94, "timeConfidence": 0.92, "blockConfidence": 0.93, "source": "busy" },
+    { "x": 0.71, "y": 0.27, "width": 0.12, "height": 0.07, "dayColumnIndex": 5, "date": "2026-03-20", "dateConfidence": 0.93, "timeConfidence": 0.9, "blockConfidence": 0.91, "source": "busy" },
+    { "x": 0.84, "y": 0.35, "width": 0.12, "height": 0.07, "dayColumnIndex": 6, "date": "2026-03-21", "dateConfidence": 0.93, "timeConfidence": 0.9, "blockConfidence": 0.91, "source": "busy" },
+    { "x": 0.84, "y": 0.78, "width": 0.12, "height": 0.07, "dayColumnIndex": 6, "date": "2026-03-21", "dateConfidence": 0.93, "timeConfidence": 0.9, "blockConfidence": 0.91, "source": "busy" }
+  ],
+  "warnings": []
+}

@@ -16,6 +16,24 @@ export interface ParsedDraftWindow {
   date: string;
   start: string;
   end: string;
+  overallConfidence?: number;
+  dateConfidence?: number;
+  timeConfidence?: number;
+  blockConfidence?: number;
+  warnings?: string[];
+  parseType?: string;
+  uncertainDate?: boolean;
+  uncertainTime?: boolean;
+}
+
+export interface DraftReviewWindow {
+  id: string;
+  date: string;
+  start: string;
+  end: string;
+  mappedDate: string | null;
+  mappedMode: "exact" | "weekday" | "none";
+  draftMeta?: OtherPersonWindow["draftMeta"];
 }
 
 function nextId(): string {
@@ -151,15 +169,14 @@ export interface NormalizeDraftStats {
 }
 
 /**
- * Convert API draft windows into OtherPersonWindow[] with ids and schedule-aligned dates.
- * Tracks how many were in range, skipped (invalid time), or out of range (unresolvable date).
+ * Convert API draft windows into editable review rows.
+ * Preserves screenshot-native dates and optionally maps them into the current schedule range.
  */
 export function normalizeDraftToWindows(
   draft: ParsedDraftWindow[],
   scheduleDays: ScheduleDayOption[]
-): { windows: OtherPersonWindow[]; stats: NormalizeDraftStats } {
-  const scheduleDates = new Set(scheduleDays.map((d) => d.date));
-  const windows: OtherPersonWindow[] = [];
+): { windows: DraftReviewWindow[]; stats: NormalizeDraftStats } {
+  const windows: DraftReviewWindow[] = [];
   const stats: NormalizeDraftStats = { inRange: 0, skipped: 0, outOfRange: 0 };
 
   for (const w of draft) {
@@ -169,18 +186,29 @@ export function normalizeDraftToWindows(
       stats.skipped++;
       continue;
     }
-    const date = resolveDraftDate(w.date, scheduleDays);
-    if (date == null || !scheduleDates.has(date)) {
-      stats.outOfRange++;
-      continue;
-    }
+    const normalizedDate = normalizeDateString(w.date);
+    const exactMatch = scheduleDays.some((d) => d.date === normalizedDate);
+    const mappedDate = resolveDraftDate(normalizedDate, scheduleDays);
     windows.push({
       id: nextId(),
-      date,
+      date: normalizedDate,
       start,
       end,
+      mappedDate,
+      mappedMode: exactMatch ? "exact" : mappedDate ? "weekday" : "none",
+      draftMeta: {
+        overallConfidence: w.overallConfidence,
+        dateConfidence: w.dateConfidence,
+        timeConfidence: w.timeConfidence,
+        blockConfidence: w.blockConfidence,
+        warnings: w.warnings,
+        parseType: w.parseType,
+        uncertainDate: w.uncertainDate,
+        uncertainTime: w.uncertainTime,
+      },
     });
-    stats.inRange++;
+    if (mappedDate) stats.inRange++;
+    else stats.outOfRange++;
   }
 
   return { windows, stats };

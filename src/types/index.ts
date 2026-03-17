@@ -27,6 +27,17 @@ export interface OtherPersonWindow {
   start: string;
   /** End time HH:mm (24h) in other person's timezone. */
   end: string;
+  /** Optional draft metadata from screenshot parsing review. */
+  draftMeta?: {
+    overallConfidence?: number;
+    dateConfidence?: number;
+    timeConfidence?: number;
+    blockConfidence?: number;
+    warnings?: string[];
+    parseType?: string;
+    uncertainDate?: boolean;
+    uncertainTime?: boolean;
+  };
 }
 
 /** UTC availability range (ISO start/end). Used for overlap math. */

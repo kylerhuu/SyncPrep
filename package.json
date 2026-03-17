@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test:screenshot-parser": "rm -rf .tmp-tests && tsc -p tsconfig.test.json && node --test .tmp-tests/tests/screenshot-parser.test.js"
   },
   "dependencies": {
     "jose": "^6.2.1",

@@ -46,12 +46,12 @@ function SlotRow({
         onClick={() => onSelectSlot(isSelected ? null : slot)}
         className={`w-full text-left rounded-xl border-2 px-4 py-3.5 text-sm font-medium transition-all duration-300 flex items-start justify-between gap-3 relative overflow-hidden ${
           isSelected
-            ? "border-blue-500 bg-gradient-to-br from-blue-50 via-indigo-50 to-blue-50 text-slate-900 shadow-[0_8px_24px_-6px_rgba(37,99,235,0.35)] ring-2 ring-blue-400/50"
-            : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/95 text-slate-800 hover:shadow-lg hover:-translate-y-0.5"
-        } ${isRecommendedStyle && !isSelected ? "border-l-4 border-l-cyan-500" : ""}`}
+            ? "border-blue-500 bg-gradient-to-br from-blue-950/70 via-slate-900 to-slate-900 text-slate-50 shadow-[0_14px_34px_-10px_rgba(37,99,235,0.45)] ring-2 ring-blue-400/50"
+            : "border-slate-700 bg-slate-900/85 hover:border-blue-400/60 hover:bg-slate-900 text-slate-100 hover:shadow-[0_16px_34px_-16px_rgba(37,99,235,0.35)] hover:-translate-y-0.5"
+        } ${isRecommendedStyle && !isSelected ? "border-l-4 border-l-blue-400 bg-gradient-to-r from-blue-950/50 to-slate-900/90" : ""}`}
       >
         {recommendation && (
-          <span className="absolute top-2 right-2 text-[10px] font-semibold uppercase tracking-wider text-cyan-600/80">
+          <span className="absolute top-2 right-2 rounded-full bg-blue-500/12 px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-blue-200">
             {recommendation}
           </span>
         )}

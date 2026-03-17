@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import Link from "next/link";
 import { DateTime } from "luxon";
 import {
   getAvailabilityByDaySingleUser,
@@ -22,23 +21,13 @@ import { rankMutualSlots } from "@/lib/slot-ranking";
 import type { MeetingType, PrepNotes, TimeWindow, WeeklyPattern } from "@/types";
 import type { OtherPersonWindow } from "@/types";
 import type { CalendarEventItem } from "@/types/calendar";
-import { TimezoneFields } from "@/components/scheduler/TimezoneFields";
-import { WorkingHoursInput } from "@/components/scheduler/WorkingHoursInput";
-import { DurationSelect } from "@/components/scheduler/DurationSelect";
-import { OverlapResults } from "@/components/scheduler/OverlapResults";
-import { SelectedMeetingCard } from "@/components/scheduler/SelectedMeetingCard";
-import { GoogleCalendarSection } from "@/components/calendar/GoogleCalendarSection";
-import { WeeklyScheduleSection } from "@/components/calendar/WeeklyScheduleSection";
-import { OtherPersonAvailabilitySection } from "@/components/scheduler/OtherPersonAvailabilitySection";
 import { AppNav } from "@/components/nav/AppNav";
 import { AppFooter } from "@/components/nav/AppFooter";
 import { ScheduleBackground } from "@/components/ui/ScheduleBackground";
-import { ClockIcon, CalendarIcon, SparklesIcon } from "@/components/ui/Icons";
-import { MeetingContextForm } from "@/components/prep/MeetingContextForm";
-import { PrepBriefBody } from "@/components/prep/PrepBriefBody";
-import { Button } from "@/components/ui/Button";
-import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
-import { TheirAvailabilityPreview } from "@/components/scheduler/TheirAvailabilityPreview";
+import { ScheduleSetupSection } from "@/components/scheduler/ScheduleSetupSection";
+import { OtherAvailabilitySection } from "@/components/scheduler/OtherAvailabilitySection";
+import { TimePickerSection } from "@/components/scheduler/TimePickerSection";
+import { MeetingSummaryRail } from "@/components/scheduler/MeetingSummaryRail";
 
 const STORAGE_KEYS = {
   zoneA: "syncprep_zoneA",
@@ -68,7 +57,11 @@ function normalizeOtherPersonWindows(
       const start = typeof w.start === "string" ? w.start : "09:00";
       const end = typeof w.end === "string" ? w.end : "17:00";
       const id = typeof w.id === "string" ? w.id : `win-${i}-${Date.now()}`;
-      return { id, date, start, end };
+      const draftMeta =
+        w.draftMeta && typeof w.draftMeta === "object"
+          ? (w.draftMeta as OtherPersonWindow["draftMeta"])
+          : undefined;
+      return { id, date, start, end, draftMeta };
     })
     .filter((w) => w.date && w.start && w.end);
 }
@@ -91,19 +84,6 @@ function saveJson(key: string, value: unknown) {
   } catch {
     // ignore
   }
-}
-
-function hasPrepContent(notes: PrepNotes): boolean {
-  if (notes.meetingSummary?.trim()) return true;
-  const lists = [
-    notes.questionsToPrepare,
-    notes.talkingPoints,
-    notes.strengthsToHighlight,
-    notes.skillsToReview,
-    notes.gapsOrMissing,
-    notes.followUpQuestions,
-  ];
-  return lists.some((arr) => Array.isArray(arr) && arr.length > 0);
 }
 
 const defaultWindow: TimeWindow = { start: "09:00", end: "17:00" };
@@ -489,289 +469,107 @@ export default function SchedulePage() {
             Schedule & prepare
           </h1>
           <p className="mt-2 text-slate-600 leading-relaxed">
-            Schedule across time zones and prepare better meetings.
+            Move from availability setup to confirmation without losing context.
           </p>
         </div>
 
-        <div className="flex flex-col gap-20">
-          {/* Connect calendar + Working hours — split layout */}
-            <section aria-label="Connect your calendar" className="rounded-2xl border border-slate-200/80 bg-white shadow-sm overflow-hidden">
-              <div className="px-8 pt-8 pb-6">
-                <h2 className="text-base font-semibold text-slate-900 tracking-tight">Connect calendar</h2>
-                <p className="mt-1 text-sm text-slate-600">
-                  Connect so we can use your busy times.
-                </p>
-              </div>
-              <div className="px-8 pb-8 lg:grid lg:grid-cols-[1fr_minmax(320px,400px)] lg:gap-8 lg:items-start">
-                <div className="space-y-6 min-w-0">
-                  <div className="rounded-xl border-2 border-blue-200/70 bg-gradient-to-br from-blue-50/50 to-white overflow-hidden">
-                    <GoogleCalendarSection
-                      userTimeZone={zoneA}
-                      onCalendarChange={onCalendarChange}
-                      derivedAvailabilityToday={derivedAvailabilityToday}
-                    />
-                  </div>
-                  <div className="space-y-6 rounded-xl border border-slate-200/80 bg-slate-50/40 p-6">
-                    <TimezoneFields
-                      zoneA={zoneA}
-                      zoneB={zoneB}
-                      onZoneAChange={setZoneA}
-                      onZoneBChange={setZoneB}
-                      errorZoneA={validation.errorZoneA}
-                      errorZoneB={undefined}
-                      singleUser
-                    />
-                    <DurationSelect value={duration} onChange={setDuration} />
-                    <WorkingHoursInput
-                      value={workingHoursA}
-                      onChange={setWorkingHoursA}
-                      label="Your working hours"
-                      helperText={
-                        calendarConnected
-                          ? "Used with your calendar to find your free slots."
-                          : "When you're generally available. Connect your calendar above for real busy times."
-                      }
-                    />
-                  </div>
-                </div>
-                <div className="schedule-preview-panel mt-8 lg:mt-0 lg:sticky lg:top-24 flex flex-col min-h-[260px] rounded-xl border border-slate-200/80 bg-slate-50/50 overflow-hidden transition-all duration-300">
-                  {calendarConnected ? (
-                    <div className="p-4 flex-1 min-h-0 overflow-auto">
-                      <WeeklyScheduleSection
-                        userTimeZone={zoneA}
-                        workingHours={workingHoursA}
-                        events={calendarEvents}
-                        connected={true}
-                        selectedSlot={null}
-                        compact={true}
-                      />
-                    </div>
-                  ) : (
-                    <div className="flex-1 flex flex-col items-center justify-center py-12 px-6 text-center">
-                      <span className="[&_svg]:text-slate-400 mb-3" aria-hidden>
-                        <CalendarIcon />
-                      </span>
-                      <p className="text-sm font-medium text-slate-600">Connect your calendar to see your schedule</p>
-                      <p className="text-xs text-slate-500 mt-1 max-w-[220px]">
-                        Your weekly busy blocks will appear here after you connect.
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </section>
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)] lg:items-start">
+          <div className="space-y-8">
+            <ScheduleSetupSection
+              zoneA={zoneA}
+              workingHoursA={workingHoursA}
+              duration={duration}
+              calendarConnected={calendarConnected}
+              calendarEvents={calendarEvents}
+              derivedAvailabilityToday={derivedAvailabilityToday}
+              errorZoneA={validation.errorZoneA}
+              selectedSlot={selectedSlot}
+              onZoneAChange={setZoneA}
+              onDurationChange={setDuration}
+              onWorkingHoursAChange={setWorkingHoursA}
+              onCalendarChange={onCalendarChange}
+            />
 
-            {/* Their availability — split layout */}
-            <section aria-label="Other person's availability" className="rounded-2xl border border-slate-200/80 bg-white shadow-sm overflow-hidden">
-              <div className="px-8 pt-8 pb-6">
-                <h2 className="text-base font-semibold text-slate-900 tracking-tight">Their availability</h2>
-                <p className="mt-1 text-sm text-slate-600">
-                  Weekly pattern, screenshot, or specific dates.
-                </p>
-              </div>
-              <div className="px-8 pb-8 lg:grid lg:grid-cols-[1fr_minmax(320px,400px)] lg:gap-8 lg:items-start">
-                <div className="min-w-0">
-                  <OtherPersonAvailabilitySection
-                    scheduleDays={scheduleDays}
-                    zoneB={zoneB}
-                    onZoneBChange={setZoneB}
-                    windows={otherPersonWindows}
-                    onWindowsChange={setOtherPersonWindows}
-                    weeklyPattern={weeklyPattern}
-                    onWeeklyPatternChange={setWeeklyPattern}
-                  />
-                </div>
-                <div className="schedule-preview-panel mt-8 lg:mt-0 lg:sticky lg:top-24 flex flex-col min-h-[260px] rounded-xl border border-slate-200/80 bg-slate-50/50 overflow-hidden transition-all duration-300 p-4">
-                  <TheirAvailabilityPreview
-                    zoneB={zoneB}
-                    weeklyPattern={weeklyPattern}
-                    windows={otherPersonWindows}
-                  />
-                </div>
-              </div>
-            </section>
+            <OtherAvailabilitySection
+              scheduleDays={scheduleDays}
+              zoneB={zoneB}
+              windows={otherPersonWindows}
+              weeklyPattern={weeklyPattern}
+              onZoneBChange={setZoneB}
+              onWindowsChange={setOtherPersonWindows}
+              onWeeklyPatternChange={setWeeklyPattern}
+            />
 
-            {/* Find a time + Booking: master-detail layout */}
-            <section
-              aria-label={useTwoPersonOverlap ? "Mutual availability" : "Available times"}
-              className="rounded-2xl border border-slate-200/80 bg-white shadow-sm overflow-hidden"
-            >
-              <div className="px-8 pt-8 pb-6">
-                <h2 className="text-base font-semibold text-slate-900 tracking-tight">Find a time</h2>
-                <p className="mt-1 text-sm text-slate-600">
-                  {useTwoPersonOverlap ? "Pick a mutual slot." : "Pick an available slot."}
-                </p>
-              </div>
-              <div className="px-8 pb-8 lg:grid lg:grid-cols-[1fr_minmax(320px,400px)] lg:gap-8 lg:items-start">
-                {/* Left: time selection */}
-                <div className="space-y-5 min-w-0">
-                  {validation.canCompute && availabilityByDay.length > 0 && (
-                    <div className="flex flex-wrap gap-2" role="tablist" aria-label="Choose day">
-                      {availabilityByDay.map((day) => {
-                        const isSelected = selectedDay === day.date;
-                        return (
-                          <button
-                            key={day.date}
-                            type="button"
-                            role="tab"
-                            aria-selected={isSelected}
-                            onClick={() => setSelectedDay(day.date)}
-                            className={`rounded-xl border-2 px-3.5 py-2.5 text-sm font-medium transition-all duration-200 shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 ${isSelected ? "border-blue-500 bg-blue-500 text-white shadow-md shadow-blue-500/25" : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50"}`}
-                          >
-                            <span className="block truncate max-w-[7rem] sm:max-w-none">{day.label}</span>
-                            {day.slots.length > 0 && (
-                              <span className={`ml-1.5 font-normal tabular-nums ${isSelected ? "text-blue-100" : "text-slate-500"}`}>
-                                ({day.slots.length})
-                              </span>
-                            )}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                  <OverlapResults
-                    allSlots={allSlots}
-                    slotsForSelectedDay={selectedDaySlots}
-                    suggestedSlots={suggestedSlots}
-                    rankedSlotsForSelectedDay={rankedSlotsForSelectedDay}
-                    selectedSlot={selectedSlot}
-                    onSelectSlot={setSelectedSlot}
-                    zoneA={zoneA}
-                    zoneB={useTwoPersonOverlap ? zoneB : undefined}
-                    singleUser={!useTwoPersonOverlap}
-                    hasValidInputNoOverlap={hasValidInputNoOverlap}
-                    showInputPrompt={showInputPrompt}
-                  />
-                  <WeeklyScheduleSection
-                    userTimeZone={zoneA}
-                    workingHours={workingHoursA}
-                    events={calendarEvents}
-                    connected={calendarConnected}
-                    selectedSlot={selectedSlot}
-                  />
-                </div>
-                {/* Right: placeholder or booking panel */}
-                <div
-                  className="schedule-booking-panel mt-8 lg:mt-0 lg:sticky lg:top-24 flex flex-col min-h-[280px] rounded-xl border border-slate-200/80 bg-slate-50/50 overflow-hidden transition-all duration-300"
-                  aria-label="Booking"
-                >
-                  {selectedSlot ? (
-                    <div className="schedule-booking-panel-inner flex-1">
-                      <SelectedMeetingCard
-                        slot={selectedSlot}
-                        zoneA={zoneA}
-                        zoneB={useTwoPersonOverlap ? zoneB : undefined}
-                        title="Meeting"
-                        singleUser={!useTwoPersonOverlap}
-                      />
-                    </div>
-                  ) : (
-                    <div className="flex-1 flex flex-col items-center justify-center py-12 px-6 text-center">
-                      <span className="[&_svg]:text-slate-400 mb-3" aria-hidden>
-                        <ClockIcon />
-                      </span>
-                      <p className="text-sm font-medium text-slate-600">Select a time to continue</p>
-                      <p className="text-xs text-slate-500 mt-1 max-w-[220px]">
-                        Choose a slot from the list to add the event to your calendar.
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </section>
+            <TimePickerSection
+              useTwoPersonOverlap={useTwoPersonOverlap}
+              validationCanCompute={validation.canCompute}
+              availabilityByDay={availabilityByDay}
+              selectedDay={selectedDay}
+              selectedDaySlots={selectedDaySlots}
+              allSlots={allSlots}
+              suggestedSlots={suggestedSlots}
+              rankedSlotsForSelectedDay={rankedSlotsForSelectedDay}
+              selectedSlot={selectedSlot}
+              zoneA={zoneA}
+              zoneB={zoneB}
+              hasValidInputNoOverlap={hasValidInputNoOverlap}
+              showInputPrompt={showInputPrompt}
+              calendarEvents={calendarEvents}
+              calendarConnected={calendarConnected}
+              workingHoursA={workingHoursA}
+              onSelectDay={setSelectedDay}
+              onSelectSlot={setSelectedSlot}
+              mobileSummary={
+                <MeetingSummaryRail
+                  zoneA={zoneA}
+                  zoneB={zoneB}
+                  duration={duration}
+                  useTwoPersonOverlap={useTwoPersonOverlap}
+                  calendarConnected={calendarConnected}
+                  availabilityByDay={availabilityByDay}
+                  allSlots={allSlots}
+                  selectedSlot={selectedSlot}
+                  prepNotes={prepNotes}
+                  prepLoading={prepLoading}
+                  prepError={prepError}
+                  meetingType={meetingType}
+                  context={context}
+                  resume={resume}
+                  jobDescription={jobDescription}
+                  onMeetingTypeChange={setMeetingType}
+                  onContextChange={setContext}
+                  onResumeChange={setResume}
+                  onJobDescriptionChange={setJobDescription}
+                  onGeneratePrep={generatePrep}
+                />
+              }
+            />
+          </div>
 
-            {/* Meeting brief / AI prep — split layout */}
-            <section aria-label="Meeting context" className="rounded-2xl border border-slate-200/80 bg-white shadow-sm overflow-hidden">
-              <div className="px-8 pt-8 pb-6">
-                <h2 className="text-base font-semibold text-slate-900 tracking-tight">Meeting brief</h2>
-                <p className="mt-1 text-sm text-slate-600">
-                  Notes, resume, or job description for prep.
-                </p>
-              </div>
-              <div className="px-8 pb-8 lg:grid lg:grid-cols-[1fr_minmax(320px,400px)] lg:gap-8 lg:items-start">
-                <div className="min-w-0 space-y-4">
-                  <MeetingContextForm
-                    meetingType={meetingType}
-                    context={context}
-                    resume={resume}
-                    jobDescription={jobDescription}
-                    onMeetingTypeChange={setMeetingType}
-                    onContextChange={setContext}
-                    onResumeChange={setResume}
-                    onJobDescriptionChange={setJobDescription}
-                    noCard
-                  />
-                  <div className="border-t border-slate-200 pt-4">
-                    <Button
-                      onClick={generatePrep}
-                      disabled={prepLoading}
-                      className="w-full sm:min-w-[260px] min-h-[48px] px-6 py-3.5 text-sm font-bold transition-all duration-300 inline-flex items-center justify-center gap-2.5 shadow-xl shadow-blue-500/20 hover:shadow-blue-500/30 hover:-translate-y-0.5 [&_svg]:text-white rounded-xl bg-gradient-to-b from-blue-600 via-blue-600 to-indigo-700 hover:from-blue-500 hover:via-blue-500 hover:to-blue-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 focus-visible:ring-offset-2 disabled:opacity-60"
-                    >
-                      <SparklesIcon />
-                      {prepLoading ? "Generating…" : "Generate meeting brief"}
-                    </Button>
-                    <p className="text-xs text-slate-500 mt-4 mb-0">You&apos;ll get: overview, talking points, questions, strengths, topics to review.</p>
-                  </div>
-                </div>
-                <div className="schedule-preview-panel mt-8 lg:mt-0 lg:sticky lg:top-24 flex flex-col min-h-[280px] rounded-xl border border-slate-200/80 bg-slate-50/50 overflow-hidden transition-all duration-300">
-                  {prepLoading ? (
-                    <div className="flex-1 flex flex-col items-center justify-center py-12 px-6">
-                      <LoadingSpinner label="Generating meeting brief…" size="md" />
-                      <p className="text-xs text-slate-500 mt-4">AI is preparing your talking points…</p>
-                    </div>
-                  ) : prepError ? (
-                    <div className="flex-1 flex flex-col items-center justify-center py-8 px-6 text-center">
-                      <p className="text-sm text-red-700 mb-4">{prepError}</p>
-                      <Button onClick={generatePrep} variant="secondary" className="rounded-xl">
-                        Try again
-                      </Button>
-                    </div>
-                  ) : prepNotes && hasPrepContent(prepNotes) ? (
-                    <div className="flex-1 min-h-0 overflow-auto p-4">
-                      <PrepBriefBody notes={prepNotes} />
-                    </div>
-                  ) : (
-                    <div className="flex-1 flex flex-col items-center justify-center py-12 px-6 text-center">
-                      <span className="[&_svg]:text-slate-400 mb-3" aria-hidden>
-                        <SparklesIcon />
-                      </span>
-                      <p className="text-sm font-medium text-slate-600">Add context and generate to see your brief</p>
-                      <p className="text-xs text-slate-500 mt-1 max-w-[220px]">
-                        Talking points, questions, strengths to highlight, and more.
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </section>
-
-            {/* Step 6 — Generate AI meeting brief */}
-            <div className="max-w-2xl mx-auto w-full">
-            <section aria-label="Generate AI meeting brief" className="rounded-2xl border border-slate-200/80 bg-white shadow-sm overflow-hidden">
-              <div className="px-8 pt-8 pb-6">
-                <h2 className="text-base font-semibold text-slate-900 tracking-tight">AI meeting brief</h2>
-                <p className="mt-1 text-sm text-slate-600">
-                  Talking points and prep. Add context in Meeting context, then generate.
-                </p>
-              </div>
-              <div className="px-8 pb-8">
-              {prepNotes ? (
-                <p className="text-sm text-slate-600">
-                  <Link
-                    href="/prep"
-                    className="font-semibold text-[var(--accent-blue)] hover:text-blue-700 hover:underline transition-colors"
-                  >
-                    View full brief →
-                  </Link>
-                </p>
-              ) : (
-                <p className="text-sm text-slate-600">
-                  Add context in Meeting context, then click Generate.
-                </p>
-              )}
-              </div>
-            </section>
-            </div>
+          <div className="hidden lg:block lg:sticky lg:top-24">
+            <MeetingSummaryRail
+              zoneA={zoneA}
+              zoneB={zoneB}
+              duration={duration}
+              useTwoPersonOverlap={useTwoPersonOverlap}
+              calendarConnected={calendarConnected}
+              availabilityByDay={availabilityByDay}
+              allSlots={allSlots}
+              selectedSlot={selectedSlot}
+              prepNotes={prepNotes}
+              prepLoading={prepLoading}
+              prepError={prepError}
+              meetingType={meetingType}
+              context={context}
+              resume={resume}
+              jobDescription={jobDescription}
+              onMeetingTypeChange={setMeetingType}
+              onContextChange={setContext}
+              onResumeChange={setResume}
+              onJobDescriptionChange={setJobDescription}
+              onGeneratePrep={generatePrep}
+            />
+          </div>
         </div>
       </main>
       <AppFooter />
