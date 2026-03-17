@@ -11,6 +11,16 @@ const config: Config = {
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
+        "schedule-dark": {
+          bg: "#0f1115",
+          card: "#151821",
+          accent: "#ff7a18",
+          "accent-soft": "rgba(255, 122, 24, 0.15)",
+        },
+      },
+      boxShadow: {
+        "orange-glow": "0 0 20px rgba(255, 122, 24, 0.4)",
+        "orange-glow-lg": "0 0 32px rgba(255, 122, 24, 0.5)",
       },
       keyframes: {
         "hero-glow-shift": {

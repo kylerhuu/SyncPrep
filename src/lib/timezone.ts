@@ -6,12 +6,23 @@
  * 2. Convert each availability window (local start/end) to UTC for that day; if end <= start, treat as overnight (end += 1 day).
  * 3. For each pair (window A, window B): overlap = [max(A_start, B_start), min(A_end, B_end)]. Skip if overlap_start >= overlap_end.
  * 4. Within each overlap, step by meeting duration (30/60/90 min); emit slots [cursor, cursor + duration] while cursor + duration <= overlap_end.
- * 5. Dedupe by start ISO, sort by start, return top N suggestions.
+ * 5. Slot start times are rounded up to the next 15-minute boundary so displayed times are e.g. 1:15 PM not 1:17 PM.
+ * 6. Dedupe by start ISO, sort by start, return top N suggestions.
  *
  * Uses Luxon (IANA time zones, DST-safe) for all conversions.
  */
 
 import { DateTime } from "luxon";
+
+/** Round a datetime up to the next 15-minute boundary (e.g. 1:07 → 1:15, 1:15 → 1:15). */
+function roundUpToNext15(dt: DateTime): DateTime {
+  const totalMinutes =
+    dt.hour * 60 + dt.minute + dt.second / 60 + dt.millisecond / 60000;
+  const roundedTotal = Math.ceil(totalMinutes / 15) * 15;
+  const hours = Math.floor(roundedTotal / 60);
+  const minutes = roundedTotal % 60;
+  return dt.startOf("day").plus({ hours, minutes });
+}
 import type { TimeWindow, AvailabilityRange, WeeklyPattern } from "@/types";
 
 /** Abbreviation → IANA time zone. */
@@ -344,7 +355,8 @@ export function findOverlappingSlotsFromRanges(
       const start = DateTime.max(startA, startB);
       const end = DateTime.min(endA, endB);
       if (start >= end) continue;
-      let cursor = start;
+      let cursor = roundUpToNext15(start);
+      if (cursor >= end) continue;
       while (cursor.plus(duration).valueOf() <= end.valueOf()) {
         const slotEnd = cursor.plus(duration);
         const startISO = cursor.toISO();
@@ -420,7 +432,8 @@ export function availabilityRangesToSlots(
     const start = DateTime.fromISO(r.startISO, { setZone: true });
     const end = DateTime.fromISO(r.endISO, { setZone: true });
     if (!start.isValid || !end.isValid || start >= end) continue;
-    let cursor = start;
+    let cursor = roundUpToNext15(start);
+    if (cursor >= end) continue;
     while (cursor.plus(duration).valueOf() <= end.valueOf()) {
       const slotEnd = cursor.plus(duration);
       const startISO = cursor.toISO();

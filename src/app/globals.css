@@ -467,3 +467,722 @@ body {
 .selected-glow {
   animation: selected-glow-pulse 2.5s ease-in-out infinite;
 }
+
+@keyframes schedule-card-reveal {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+/* ========== Schedule: Dark tech (rebuild - dark navy + ambient) ========== */
+.schedule-dark-tech {
+  --schedule-bg: #0c0f18;
+  --schedule-card: #0f1115;
+  --schedule-card-inner: #13161c;
+  --schedule-border: rgba(255, 255, 255, 0.06);
+  --schedule-border-strong: rgba(255, 255, 255, 0.1);
+  --schedule-accent: #ff7a18;
+  --schedule-accent-soft: rgba(255, 122, 24, 0.15);
+  --schedule-glow: rgba(255, 140, 42, 0.5);
+  --schedule-glow-subtle: rgba(255, 140, 42, 0.3);
+  --schedule-glow-bloom: rgba(255, 140, 42, 0.22);
+  --schedule-text: #e8eef4;
+  --schedule-muted: #a8b8c8;
+  --parallax-neural: 0px;
+  /* Base: subtle dark navy gradient; vignette at edges; no bright center. */
+  background:
+    radial-gradient(
+      ellipse 100% 100% at 50% 50%,
+      transparent 0%,
+      transparent 45%,
+      rgba(0, 0, 0, 0.35) 80%,
+      rgba(0, 0, 0, 0.55) 100%
+    ),
+    linear-gradient(168deg, #080b12 0%, #0c0f18 40%, #0a0e16 100%);
+  background-color: #0c0f18;
+  color: var(--schedule-text);
+  position: relative;
+}
+
+/* Parallax CSS vars - set by JS on scroll for subtle depth */
+.schedule-dark-tech {
+  --parallax-neural: 0px;
+}
+
+.schedule-dark-tech > .schedule-bg-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.schedule-dark-tech > .schedule-content {
+  position: relative;
+  z-index: 10;
+}
+
+/* 3. Neural layer - sparse, embedded, stronger toward edges */
+.schedule-neural {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: hidden;
+  opacity: 0.3;
+  translate: 0 var(--parallax-neural);
+  mask-image: radial-gradient(
+    ellipse 75% 70% at 50% 45%,
+    transparent 0%,
+    rgba(0,0,0,0.55) 50%,
+    black 88%
+  );
+  -webkit-mask-image: radial-gradient(
+    ellipse 75% 70% at 50% 45%,
+    transparent 0%,
+    rgba(0,0,0,0.55) 50%,
+    black 88%
+  );
+}
+
+.schedule-neural-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  min-width: 100vw;
+  min-height: 100vh;
+  animation: schedule-neural-drift 80s ease-in-out infinite;
+}
+
+@keyframes schedule-neural-drift {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(0.05%, 0.025%); }
+}
+
+.schedule-neural .neural-line {
+  stroke: rgba(255, 165, 90, 0.016);
+  stroke-width: 0.15;
+  fill: none;
+  stroke-linecap: round;
+  animation: schedule-neural-line 72s ease-in-out infinite;
+}
+
+.schedule-neural .neural-line:nth-child(odd) {
+  stroke: rgba(90, 130, 190, 0.01);
+  animation-delay: -24s;
+}
+
+@keyframes schedule-neural-line {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 0.8; }
+}
+
+.schedule-neural .neural-node {
+  opacity: 0.65;
+}
+
+.schedule-neural .neural-node-glow {
+  animation: schedule-neural-pulse 64s ease-in-out infinite;
+}
+
+@keyframes schedule-neural-pulse {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+
+/* Edge glows - subtle orange ambient left/right */
+.schedule-edge-glow {
+  position: absolute;
+  top: 0;
+  width: 28%;
+  max-width: 320px;
+  height: 100%;
+  pointer-events: none;
+  filter: blur(80px);
+  -webkit-filter: blur(80px);
+}
+
+.schedule-edge-glow-left {
+  left: 0;
+  background: radial-gradient(
+    ellipse 100% 80% at 0% 50%,
+    rgba(255, 140, 50, 0.06) 0%,
+    rgba(255, 120, 40, 0.02) 45%,
+    transparent 70%
+  );
+}
+
+.schedule-edge-glow-right {
+  right: 0;
+  left: auto;
+  background: radial-gradient(
+    ellipse 100% 80% at 100% 50%,
+    rgba(255, 140, 50, 0.05) 0%,
+    rgba(255, 120, 40, 0.018) 45%,
+    transparent 70%
+  );
+}
+
+/* Faint navy/orange radial depth behind key sections */
+.schedule-depth-radial {
+  position: absolute;
+  left: 50%;
+  top: 35%;
+  width: 90%;
+  height: 90%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(
+    ellipse 70% 60% at 50% 40%,
+    rgba(40, 50, 80, 0.12) 0%,
+    rgba(255, 130, 50, 0.03) 35%,
+    transparent 65%
+  );
+  pointer-events: none;
+}
+
+/* Soft orange radial glow behind main content card only */
+.schedule-card-glow {
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  width: min(100%, 680px);
+  height: 75vh;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(
+    ellipse 70% 80% at 50% 50%,
+    rgba(255, 130, 50, 0.06) 0%,
+    rgba(255, 100, 30, 0.03) 40%,
+    transparent 70%
+  );
+  filter: blur(60px);
+  -webkit-filter: blur(60px);
+  pointer-events: none;
+}
+
+.schedule-dark-tech > * {
+  position: relative;
+  z-index: 2;
+}
+
+/* Card reveal on scroll - progressive enhancement */
+@supports (animation-timeline: view()) {
+  .schedule-dark-tech main section {
+    animation: schedule-card-reveal 0.6s ease-out both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 30%;
+  }
+}
+
+/* Nav - depth, layered */
+.schedule-dark-tech header {
+  background: linear-gradient(
+    180deg,
+    rgba(24, 27, 38, 0.98) 0%,
+    rgba(18, 21, 32, 0.95) 100%
+  ) !important;
+  border-color: var(--schedule-border) !important;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 4px 24px -8px rgba(0, 0, 0, 0.4) !important;
+}
+
+.schedule-dark-tech header a {
+  color: var(--schedule-muted) !important;
+}
+
+.schedule-dark-tech header a:hover {
+  color: var(--schedule-text) !important;
+}
+
+.schedule-dark-tech header .text-slate-900,
+.schedule-dark-tech header [class*="text-slate-900"] {
+  color: var(--schedule-text) !important;
+}
+
+/* Step cards - stronger depth, subtle gradient */
+.schedule-dark-tech main section {
+  background: linear-gradient(
+    180deg,
+    rgba(24, 28, 38, 0.98) 0%,
+    rgba(18, 21, 30, 0.99) 50%,
+    rgba(14, 17, 24, 0.98) 100%
+  ) !important;
+  border: 1px solid var(--schedule-border-strong) !important;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.06) inset,
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset,
+    0 24px 48px -12px rgba(0, 0, 0, 0.55),
+    0 8px 24px -8px rgba(0, 0, 0, 0.4) !important;
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+/* Step badges - orange bloom affects surrounding space */
+.schedule-dark-tech main section span[aria-hidden].rounded-full {
+  background: var(--schedule-accent) !important;
+  box-shadow:
+    0 0 20px var(--schedule-glow),
+    0 0 40px var(--schedule-glow-bloom),
+    0 0 60px rgba(255, 140, 42, 0.1);
+}
+
+/* Headings and text */
+.schedule-dark-tech main h1,
+.schedule-dark-tech main h2 {
+  color: var(--schedule-text) !important;
+}
+
+.schedule-dark-tech main p {
+  color: var(--schedule-muted) !important;
+}
+
+.schedule-dark-tech main .text-slate-500 {
+  color: var(--schedule-muted) !important;
+}
+
+.schedule-dark-tech main .text-slate-600 {
+  color: var(--schedule-muted) !important;
+}
+
+/* Links */
+.schedule-dark-tech main a {
+  color: var(--schedule-accent) !important;
+}
+
+.schedule-dark-tech main a:hover {
+  color: #ff8c2a !important;
+}
+
+/* Footer dark */
+.schedule-dark-tech footer {
+  background: var(--schedule-bg) !important;
+  border-color: var(--schedule-border) !important;
+  color: var(--schedule-muted) !important;
+}
+
+/* Inner panels - different tone, subtle depth */
+.schedule-dark-tech .rounded-xl.border,
+.schedule-dark-tech [class*="rounded-xl"][class*="border"] {
+  background: linear-gradient(
+    180deg,
+    rgba(26, 29, 40, 0.9) 0%,
+    rgba(20, 23, 32, 0.95) 100%
+  ) !important;
+  border: 1px solid var(--schedule-border) !important;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.3) inset,
+    0 4px 12px -4px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Calendar section inner */
+.schedule-dark-tech .from-blue-50,
+.schedule-dark-tech .border-blue-200 {
+  background: linear-gradient(
+    180deg,
+    rgba(24, 27, 38, 0.8) 0%,
+    rgba(18, 21, 30, 0.9) 100%
+  ) !important;
+  border-color: var(--schedule-border) !important;
+}
+
+/* Settings block - inner panel tone */
+.schedule-dark-tech .bg-slate-50 {
+  background: linear-gradient(
+    180deg,
+    rgba(22, 25, 35, 0.7) 0%,
+    rgba(15, 18, 26, 0.85) 100%
+  ) !important;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.2) inset !important;
+}
+
+/* Day tabs - glow on hover, active glow */
+.schedule-dark-tech main button.rounded-xl[role="tab"] {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-color: var(--schedule-border) !important;
+  color: var(--schedule-muted) !important;
+  transition: box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.schedule-dark-tech main button.rounded-xl[role="tab"]:hover {
+  border-color: rgba(255, 140, 42, 0.4) !important;
+  color: var(--schedule-text) !important;
+  box-shadow: 0 0 12px var(--schedule-glow-subtle);
+}
+
+.schedule-dark-tech main button.rounded-xl[role="tab"][aria-selected="true"] {
+  background: var(--schedule-accent) !important;
+  border-color: var(--schedule-accent) !important;
+  color: #000 !important;
+  box-shadow:
+    0 0 20px var(--schedule-glow),
+    0 0 40px var(--schedule-glow-bloom),
+    0 0 60px rgba(255, 140, 42, 0.12);
+}
+
+/* Slot buttons - glow on hover, soft glow when selected */
+.schedule-dark-tech main li button.rounded-xl {
+  background: rgba(21, 24, 33, 0.9) !important;
+  border-color: var(--schedule-border) !important;
+  color: var(--schedule-text) !important;
+  transition: box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.schedule-dark-tech main li button.rounded-xl:hover {
+  border-color: rgba(255, 140, 42, 0.4) !important;
+  box-shadow: 0 0 12px var(--schedule-glow-subtle);
+}
+
+/* Availability card text: light for times, medium gray for labels */
+.schedule-dark-tech main li button.rounded-xl .font-semibold {
+  color: #E8EDF5;
+}
+.schedule-dark-tech main li button.rounded-xl .text-slate-500,
+.schedule-dark-tech main li button.rounded-xl [class*="text-slate-500"] {
+  color: #9FB0C6;
+}
+
+.schedule-dark-tech main li button.rounded-xl.border-blue-500,
+.schedule-dark-tech main li button[class*="border-blue"] {
+  background: rgba(255, 120, 40, 0.15) !important;
+  border-color: var(--schedule-accent) !important;
+  box-shadow:
+    0 0 12px rgba(255, 140, 42, 0.2),
+    0 0 24px rgba(255, 140, 42, 0.1);
+}
+
+/* Empty states - premium, intentional */
+.schedule-dark-tech main .border-dashed {
+  border: 1px dashed var(--schedule-border) !important;
+  background: linear-gradient(
+    180deg,
+    rgba(26, 29, 40, 0.4) 0%,
+    rgba(20, 23, 32, 0.5) 100%
+  ) !important;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.02) inset !important;
+  color: var(--schedule-muted) !important;
+}
+
+/* Card component - inner panel depth */
+.schedule-dark-tech [class*="border-2"][class*="border-emerald"],
+.schedule-dark-tech .bg-surface-elevated,
+.schedule-dark-tech .bg-section-ai {
+  background: linear-gradient(
+    180deg,
+    rgba(26, 29, 40, 0.9) 0%,
+    rgba(20, 23, 32, 0.95) 100%
+  ) !important;
+  border-color: var(--schedule-border) !important;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.2) inset,
+    0 4px 12px -4px rgba(0, 0, 0, 0.25) !important;
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+/* Selected/active cards - soft orange bloom into surrounding space */
+.schedule-dark-tech .rounded-xl.border-2.bg-white:has(button:focus),
+.schedule-dark-tech [class*="rounded-xl"][class*="border"]:focus-within {
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.2) inset,
+    0 0 24px var(--schedule-glow-subtle),
+    0 0 48px var(--schedule-glow-bloom),
+    0 0 64px rgba(255, 140, 42, 0.08) !important;
+}
+
+/* Inputs - depth */
+.schedule-dark-tech input,
+.schedule-dark-tech select,
+.schedule-dark-tech textarea {
+  background: linear-gradient(
+    180deg,
+    rgba(18, 21, 30, 0.9) 0%,
+    rgba(12, 15, 22, 0.95) 100%
+  ) !important;
+  border-color: var(--schedule-border) !important;
+  color: var(--schedule-text) !important;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.2) inset !important;
+}
+
+.schedule-dark-tech input:focus,
+.schedule-dark-tech select:focus,
+.schedule-dark-tech textarea:focus {
+  border-color: var(--schedule-accent) !important;
+  box-shadow: 0 0 0 2px var(--schedule-accent-soft), 0 0 12px var(--schedule-glow-subtle);
+}
+
+/* Labels - slightly higher contrast for readability */
+.schedule-dark-tech label {
+  color: #b4c2d2 !important;
+}
+
+/* Buttons - primary orange glow on hover */
+.schedule-dark-tech button.rounded-xl.bg-emerald-600,
+.schedule-dark-tech button[class*="bg-emerald"] {
+  background: var(--schedule-accent) !important;
+  color: #000 !important;
+  transition: box-shadow 0.25s ease;
+}
+
+.schedule-dark-tech button.rounded-xl.bg-emerald-600:hover,
+.schedule-dark-tech button[class*="bg-emerald"]:hover {
+  box-shadow:
+    0 0 24px var(--schedule-glow),
+    0 0 48px var(--schedule-glow-bloom),
+    0 0 64px rgba(255, 140, 42, 0.12);
+}
+
+/* Tab buttons in OtherPersonAvailability */
+.schedule-dark-tech .border-b button {
+  color: var(--schedule-muted) !important;
+}
+
+.schedule-dark-tech .border-b button.bg-white,
+.schedule-dark-tech .border-b button[class*="bg-white"] {
+  background: var(--schedule-card) !important;
+  color: var(--schedule-accent) !important;
+  border-color: var(--schedule-border) !important;
+}
+
+/* Weekly day cards - inner panel */
+.schedule-dark-tech .rounded-xl.border-2.bg-white {
+  background: linear-gradient(
+    180deg,
+    rgba(28, 31, 42, 0.85) 0%,
+    rgba(22, 25, 35, 0.9) 100%
+  ) !important;
+  border-color: var(--schedule-border) !important;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.15) inset !important;
+}
+
+/* Recommendation badge and best-match accent - orange */
+.schedule-dark-tech .text-cyan-600 {
+  color: var(--schedule-accent) !important;
+}
+
+.schedule-dark-tech main li button.rounded-xl.border-l-4,
+.schedule-dark-tech main li button.border-l-cyan-500 {
+  border-left-color: rgba(255, 140, 42, 0.55) !important;
+}
+
+/* Card header gradient */
+.schedule-dark-tech .from-slate-50,
+.schedule-dark-tech .from-blue-50,
+.schedule-dark-tech .via-indigo-50 {
+  background: rgba(21, 24, 33, 0.95) !important;
+}
+
+/* Button secondary - glow on hover */
+.schedule-dark-tech button.border-2,
+.schedule-dark-tech button[class*="border-2"] {
+  border-color: var(--schedule-border) !important;
+  color: var(--schedule-muted) !important;
+  transition: box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.schedule-dark-tech button.border-2:hover {
+  border-color: rgba(255, 140, 42, 0.4) !important;
+  color: var(--schedule-text) !important;
+  box-shadow: 0 0 12px var(--schedule-glow-subtle);
+}
+
+/* Loading spinner and small text */
+.schedule-dark-tech .text-slate-500 {
+  color: var(--schedule-muted) !important;
+}
+
+/* Error text */
+.schedule-dark-tech .text-red-600,
+.schedule-dark-tech .text-red-700,
+.schedule-dark-tech .text-amber-700 {
+  color: #f97316 !important;
+}
+
+/* Week view timeline - dark blocks */
+.schedule-dark-tech .from-amber-300,
+.schedule-dark-tech .from-emerald-300 {
+  background: rgba(255, 122, 24, 0.2) !important;
+  border-color: rgba(255, 122, 24, 0.3) !important;
+}
+
+.schedule-dark-tech .from-blue-500,
+.schedule-dark-tech .via-blue-600 {
+  background: var(--schedule-accent) !important;
+  box-shadow:
+    0 0 20px var(--schedule-glow),
+    0 0 40px var(--schedule-glow-bloom),
+    0 0 56px rgba(255, 140, 42, 0.1);
+}
+
+.schedule-dark-tech .from-cyan-200 {
+  background: rgba(255, 122, 24, 0.12) !important;
+  border-color: rgba(255, 122, 24, 0.25) !important;
+}
+
+/* Timeline grid lines */
+.schedule-dark-tech .border-slate-200 {
+  border-color: var(--schedule-border) !important;
+}
+
+/* Weekly schedule - premium mini timeline on dark */
+.schedule-dark-tech [aria-label="Weekly schedule"] .rounded-2xl.border {
+  background: linear-gradient(
+    180deg,
+    rgba(20, 24, 34, 0.95) 0%,
+    rgba(16, 19, 28, 0.98) 100%
+  ) !important;
+  border-color: var(--schedule-border-strong) !important;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.03) inset,
+    0 8px 24px -8px rgba(0, 0, 0, 0.4) !important;
+}
+
+.schedule-dark-tech [aria-label="Weekly schedule"] [class*="from-slate-50"],
+.schedule-dark-tech [aria-label="Weekly schedule"] [class*="bg-slate-50"] {
+  background: rgba(28, 32, 44, 0.6) !important;
+}
+
+.schedule-dark-tech [aria-label="Weekly schedule"] .text-slate-800 {
+  color: var(--schedule-text) !important;
+}
+
+.schedule-dark-tech [aria-label="Weekly schedule"] .bg-gradient-to-b {
+  background: linear-gradient(
+    180deg,
+    rgba(18, 22, 32, 0.8) 0%,
+    rgba(14, 18, 26, 0.9) 100%
+  ) !important;
+}
+
+.schedule-dark-tech [aria-label="Weekly schedule"] .text-slate-600 {
+  color: var(--schedule-muted) !important;
+}
+
+.schedule-dark-tech [aria-label="Weekly schedule"] .bg-surface-elevated {
+  background: rgba(22, 26, 36, 0.9) !important;
+  border-color: var(--schedule-border) !important;
+}
+
+.schedule-dark-tech [aria-label="Weekly schedule"] .text-slate-700 {
+  color: var(--schedule-muted) !important;
+}
+
+/* Step 5 — Add to calendar panel: dark surface to match schedule UI */
+.schedule-dark-tech .schedule-add-to-calendar-panel {
+  background: #111827 !important;
+  border-color: var(--schedule-border-strong) !important;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset,
+    0 8px 24px -8px rgba(0, 0, 0, 0.4) !important;
+}
+
+.schedule-dark-tech .schedule-add-to-calendar-panel [class*="bg-slate-50"],
+.schedule-dark-tech .schedule-add-to-calendar-panel .border-b {
+  background: rgba(17, 24, 39, 0.6) !important;
+  border-color: var(--schedule-border) !important;
+}
+
+.schedule-dark-tech .schedule-add-to-calendar-panel h2,
+.schedule-dark-tech .schedule-add-to-calendar-panel .text-slate-900,
+.schedule-dark-tech .schedule-add-to-calendar-panel p.text-sm.font-medium {
+  color: #E8EDF5 !important;
+}
+
+.schedule-dark-tech .schedule-add-to-calendar-panel .text-slate-500,
+.schedule-dark-tech .schedule-add-to-calendar-panel .text-slate-700,
+.schedule-dark-tech .schedule-add-to-calendar-panel label,
+.schedule-dark-tech .schedule-add-to-calendar-panel .text-slate-400 {
+  color: #9FB0C6 !important;
+}
+
+.schedule-dark-tech .schedule-add-to-calendar-panel .border-t {
+  border-color: var(--schedule-border) !important;
+}
+
+.schedule-dark-tech .schedule-add-to-calendar-panel input,
+.schedule-dark-tech .schedule-add-to-calendar-panel select,
+.schedule-dark-tech .schedule-add-to-calendar-panel textarea {
+  background: rgba(15, 18, 28, 0.9) !important;
+  border-color: var(--schedule-border) !important;
+  color: #E8EDF5 !important;
+}
+
+.schedule-dark-tech .schedule-add-to-calendar-panel input::placeholder,
+.schedule-dark-tech .schedule-add-to-calendar-panel textarea::placeholder {
+  color: #6b7c94;
+}
+
+.schedule-dark-tech .schedule-add-to-calendar-panel a.rounded-xl.border {
+  border-color: var(--schedule-border-strong) !important;
+  background: rgba(21, 24, 33, 0.9) !important;
+  color: #E8EDF5 !important;
+}
+
+.schedule-dark-tech .schedule-add-to-calendar-panel a.rounded-xl.border:hover {
+  background: var(--schedule-card-inner) !important;
+  color: var(--schedule-text) !important;
+}
+
+/* Master-detail right column (booking panel container) - dark theme */
+.schedule-dark-tech .schedule-booking-panel {
+  background: linear-gradient(
+    180deg,
+    rgba(21, 24, 35, 0.95) 0%,
+    rgba(17, 20, 30, 0.98) 100%
+  ) !important;
+  border-color: var(--schedule-border) !important;
+}
+
+.schedule-dark-tech .schedule-booking-panel .text-slate-600,
+.schedule-dark-tech .schedule-booking-panel .text-slate-500 {
+  color: var(--schedule-muted) !important;
+}
+
+.schedule-dark-tech .schedule-booking-panel [class*="text-slate-400"] {
+  color: var(--schedule-muted) !important;
+}
+
+/* Preview panels (Connect calendar, Their availability, Meeting brief right columns) - dark theme */
+.schedule-dark-tech .schedule-preview-panel {
+  background: linear-gradient(
+    180deg,
+    rgba(21, 24, 35, 0.95) 0%,
+    rgba(17, 20, 30, 0.98) 100%
+  ) !important;
+  border-color: var(--schedule-border) !important;
+}
+
+.schedule-dark-tech .schedule-preview-panel .text-slate-600,
+.schedule-dark-tech .schedule-preview-panel .text-slate-500,
+.schedule-dark-tech .schedule-preview-panel .text-slate-800 {
+  color: var(--schedule-muted) !important;
+}
+
+.schedule-dark-tech .schedule-preview-panel .text-slate-700 {
+  color: var(--schedule-text) !important;
+}
+
+.schedule-dark-tech .schedule-preview-panel [class*="text-slate-400"] {
+  color: var(--schedule-muted) !important;
+}
+
+/* Booking panel (master-detail right column) slide-in */
+.schedule-booking-panel-inner {
+  animation: schedule-booking-panel-in 0.3s ease-out forwards;
+}
+
+@keyframes schedule-booking-panel-in {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* SelectedMeetingCard / create event form - depth + ambient glow */
+.schedule-dark-tech .shadow-md,
+.schedule-dark-tech .shadow-lg {
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.03) inset,
+    0 8px 24px -8px rgba(0, 0, 0, 0.4),
+    0 0 20px var(--schedule-glow-subtle) !important;
+}

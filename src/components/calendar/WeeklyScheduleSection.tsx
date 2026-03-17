@@ -3,13 +3,13 @@
 import Link from "next/link";
 import { DateTime } from "luxon";
 import { WeekViewTimeline, type WeekViewBlock } from "@/components/calendar/WeekViewTimeline";
-import { workingHoursMinusBusy, resolveTimezone } from "@/lib/timezone";
+import { resolveTimezone } from "@/lib/timezone";
 import type { TimeWindow } from "@/types";
 import type { CalendarEventItem } from "@/types/calendar";
 import type { OverlapSlotResult } from "@/lib/timezone";
 
 const START_HOUR = 6;
-const END_HOUR = 22;
+const END_HOUR = 20;
 const WEEKDAYS = 5;
 
 interface WeeklyScheduleSectionProps {
@@ -74,21 +74,6 @@ export function WeeklyScheduleSection({
       });
     });
 
-    const freeGaps = workingHoursMinusBusy(
-      iana,
-      [workingHours],
-      events.map((e) => ({ start: e.start, end: e.end })),
-      dayStart
-    );
-    freeGaps.forEach((g) => {
-      blocks.push({
-        dayIndex,
-        startISO: g.startISO,
-        endISO: g.endISO,
-        type: "free",
-        label: "Available",
-      });
-    });
   }
 
   if (selectedSlot) {
@@ -101,7 +86,7 @@ export function WeeklyScheduleSection({
         startISO: selectedSlot.startISO,
         endISO: selectedSlot.endISO,
         type: "selected",
-        label: "Selected meeting",
+        label: "Selected",
       });
     }
   }
@@ -140,7 +125,7 @@ export function WeeklyScheduleSection({
             endHour={END_HOUR}
             blocks={blocks}
             zone={iana}
-            compact={compact}
+            compact={true}
           />
           <div className="flex flex-wrap gap-6 text-xs text-slate-600 bg-surface-elevated rounded-xl px-5 py-3.5 border border-slate-200/80 shadow-sm">
             <span className="flex items-center gap-2">
@@ -148,12 +133,8 @@ export function WeeklyScheduleSection({
               <span className="font-semibold text-slate-700">Busy</span>
             </span>
             <span className="flex items-center gap-2">
-              <span className="h-4 w-4 rounded-lg bg-gradient-to-br from-emerald-300 to-teal-300 border border-emerald-500/50 shrink-0 shadow-sm" />
-              <span className="font-semibold text-slate-700">Available</span>
-            </span>
-            <span className="flex items-center gap-2">
-              <span className="h-4 w-4 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 shrink-0 shadow-md ring-1 ring-blue-400/50" />
-              <span className="font-semibold text-slate-700">Selected meeting</span>
+              <span className="h-4 w-4 rounded-lg bg-gradient-to-br from-[#e66d0f] to-[#ff8c2a] shrink-0 shadow-sm ring-1 ring-[#ff7a18]/50" />
+              <span className="font-semibold text-slate-700">Selected</span>
             </span>
           </div>
         </>

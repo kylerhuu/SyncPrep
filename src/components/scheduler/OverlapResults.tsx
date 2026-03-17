@@ -157,8 +157,13 @@ export function OverlapResults({
   const sortedSlots = useRanked
     ? rankedSlotsForSelectedDay.map((r) => r.slot)
     : [...slotsForSelectedDay].sort((a, b) => a.startISO.localeCompare(b.startISO));
+  /* Top 1–3 best matches only in Recommended; rest only in All available (no duplicate) */
   const recommended = useRanked
-    ? rankedSlotsForSelectedDay.filter((r) => r.recommendation != null)
+    ? rankedSlotsForSelectedDay.filter((r) => r.recommendation != null).slice(0, 3)
+    : [];
+  const recommendedISO = new Set(recommended.map((r) => r.slot.startISO));
+  const allAvailableOnly = useRanked
+    ? rankedSlotsForSelectedDay!.filter((r) => !recommendedISO.has(r.slot.startISO))
     : [];
   const firstSuggestedISO = suggestedSlots[0]?.startISO;
   const noSlotsThisDay = allSlots.length > 0 && slotsForSelectedDay.length === 0;
@@ -214,28 +219,30 @@ export function OverlapResults({
                   </ul>
                 </div>
               )}
-              <div>
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">
-                  {recommended.length > 0 ? "All available times" : "Available times"}
-                </h3>
-                <ul className="space-y-2.5">
-                  {rankedSlotsForSelectedDay!.map((r) => (
-                    <SlotRow
-                      key={r.slot.startISO}
-                      slot={r.slot}
-                      recommendation={r.recommendation}
-                      isSelected={selectedSlot?.startISO === r.slot.startISO}
-                      isRecommendedStyle={r.recommendation != null}
-                      onSelectSlot={onSelectSlot}
-                      tzA={tzA}
-                      tzB={tzB}
-                      labelA={labelA}
-                      labelB={labelB}
-                      singleUser={!!singleUser}
-                    />
-                  ))}
-                </ul>
-              </div>
+              {(allAvailableOnly.length > 0 || recommended.length === 0) && (
+                <div>
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">
+                    {recommended.length > 0 ? "All available times" : "Available times"}
+                  </h3>
+                  <ul className="space-y-2.5">
+                    {(recommended.length > 0 ? allAvailableOnly : rankedSlotsForSelectedDay!).map((r) => (
+                      <SlotRow
+                        key={r.slot.startISO}
+                        slot={r.slot}
+                        recommendation={null}
+                        isSelected={selectedSlot?.startISO === r.slot.startISO}
+                        isRecommendedStyle={false}
+                        onSelectSlot={onSelectSlot}
+                        tzA={tzA}
+                        tzB={tzB}
+                        labelA={labelA}
+                        labelB={labelB}
+                        singleUser={!!singleUser}
+                      />
+                    ))}
+                  </ul>
+                </div>
+              )}
             </>
           ) : (
             <ul className="space-y-2.5">

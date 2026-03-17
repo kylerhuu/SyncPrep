@@ -3,7 +3,7 @@
 import { DateTime } from "luxon";
 import { resolveTimezone } from "@/lib/timezone";
 
-const HEIGHT_PER_HOUR = 44;
+const HEIGHT_PER_HOUR = 36;
 
 export type TimelineBlockType = "busy" | "free" | "selected" | "suggestion";
 
@@ -52,12 +52,12 @@ const blockStyles = {
   free:
     "bg-gradient-to-br from-emerald-300/95 via-teal-200 to-cyan-200/90 border border-emerald-500/50 text-emerald-950 shadow-[0_2px_8px_-1px_rgba(16,185,129,0.25)] transition-all duration-300",
   selected:
-    "bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-700 text-white border-0 shadow-[0_6px_20px_-4px_rgba(37,99,235,0.55),0_0_0_1px_rgba(255,255,255,0.2)_inset] ring-2 ring-blue-400/60 selected-glow transition-all duration-300",
+    "bg-gradient-to-br from-[#e66d0f] via-[#ff7a18] to-[#ff8c2a] text-white border-0 shadow-[0_2px_12px_-2px_rgba(255,122,24,0.4),0_0_0_1px_rgba(255,255,255,0.15)_inset] ring-2 ring-[#ff7a18]/50 transition-all duration-300",
   suggestion:
     "bg-gradient-to-br from-cyan-200/90 to-blue-200/80 border border-cyan-400/60 text-cyan-950 shadow-[0_2px_8px_-1px_rgba(6,182,212,0.25)] transition-all duration-300",
 } as const;
 
-const DAY_HEADER_HEIGHT = 36;
+const DAY_HEADER_HEIGHT = 32;
 
 export function WeekViewTimeline({
   weekLabel,
@@ -155,12 +155,12 @@ export function WeekViewTimeline({
                 {positionedByDay[dayIndex]?.map(({ block, top, height }, i) => (
                   <div
                     key={i}
-                    className={`absolute left-1.5 right-1.5 rounded-xl flex flex-col justify-center overflow-hidden ${blockStyles[block.type]}`}
-                    style={{ top: top + 2, height: Math.max(height - 4, 8) }}
-                    title={block.label}
+                    className={`absolute left-1.5 right-1.5 rounded-lg flex flex-col justify-center overflow-hidden ${blockStyles[block.type]}`}
+                    style={{ top: top + 2, height: Math.max(height - 4, 10) }}
+                    title={block.label ?? (block.type === "free" ? "Available" : block.type)}
                   >
-                    {!compact && block.label && (
-                      <p className="text-[11px] font-medium truncate px-1.5 py-0.5 leading-tight">
+                    {!compact && block.label && block.type !== "free" && (
+                      <p className="text-[10px] font-semibold truncate px-1.5 py-0.5 leading-tight min-w-0">
                         {block.label}
                       </p>
                     )}
