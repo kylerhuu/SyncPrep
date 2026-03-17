@@ -103,6 +103,12 @@ function getCoverageTone(coverage: DayCoverage): string {
   return "bg-slate-200 text-slate-600";
 }
 
+function validateBusyInterval(interval: { start: string; end: string }): string | null {
+  const { valid, error } = validateTimeWindow(interval);
+  if (!valid && error) return error;
+  return null;
+}
+
 const WEEKDAYS: { key: Weekday; label: string; short: string }[] = [
   { key: "Sunday", label: "Sunday", short: "Sun" },
   { key: "Monday", label: "Monday", short: "Mon" },
@@ -224,6 +230,55 @@ export function OtherPersonAvailabilitySection({
     setDraftWindows((prev) => prev.filter((w) => w.id !== id));
   }, []);
 
+  const updateParsedBusyInterval = useCallback(
+    (date: string, index: number, patch: Partial<ParsedBusyInterval>) => {
+      setParsedBusyByDate((prev) => ({
+        ...prev,
+        [date]: (prev[date] ?? []).map((interval, intervalIndex) =>
+          intervalIndex === index ? { ...interval, ...patch } : interval
+        ),
+      }));
+    },
+    []
+  );
+
+  const removeParsedBusyInterval = useCallback((date: string, index: number) => {
+    setParsedBusyByDate((prev) => {
+      const nextIntervals = (prev[date] ?? []).filter((_, intervalIndex) => intervalIndex !== index);
+      return {
+        ...prev,
+        [date]: nextIntervals,
+      };
+    });
+  }, []);
+
+  const addParsedBusyInterval = useCallback((date?: string) => {
+    const fallbackDate =
+      date ??
+      Object.keys(parsedBusyByDate)[0] ??
+      Object.keys(parsedDayCoverage)[0] ??
+      scheduleDays[0]?.date ??
+      "";
+    if (!fallbackDate) return;
+    setParsedBusyByDate((prev) => ({
+      ...prev,
+      [fallbackDate]: [
+        ...(prev[fallbackDate] ?? []),
+        {
+          date: fallbackDate,
+          start: "09:00",
+          end: "10:00",
+          overallConfidence: 0.55,
+          warnings: ["Added manually during screenshot review."],
+        },
+      ],
+    }));
+    setParsedDayCoverage((prev) => ({
+      ...prev,
+      [fallbackDate]: prev[fallbackDate] ?? "partial",
+    }));
+  }, [parsedBusyByDate, parsedDayCoverage, scheduleDays]);
+
   const addDraftWindow = useCallback(() => {
     const firstDate = scheduleDays[0]?.date ?? "";
     setDraftWindows((prev) => [
@@ -292,6 +347,7 @@ export function OtherPersonAvailabilitySection({
     setParseType(null);
     setParseConfidence(null);
     setParseDebug(null);
+    setParseRawDebug(null);
     setParsedBusyByDate({});
     setParsedDayCoverage({});
     if (previewUrl) {
@@ -577,6 +633,104 @@ export function OtherPersonAvailabilitySection({
     </ul>
   );
 
+  const renderBusyIntervalList = () => (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+          Confirmed busy intervals
+        </p>
+        <button
+          type="button"
+          onClick={() => addParsedBusyInterval()}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
+        >
+          <PlusIcon />
+          Add missing busy time
+        </button>
+      </div>
+      {Object.keys(parsedBusyByDate).length > 0 ? (
+        <ul className="space-y-2">
+          {Object.entries(parsedBusyByDate).map(([date, intervals]) => (
+            <li
+              key={`busy-${date}`}
+              className="rounded-lg border border-slate-200 bg-white px-3 py-3 text-xs text-slate-700"
+            >
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <span className="font-medium">{date}</span>
+                <div className="flex items-center gap-2">
+                  {parsedDayCoverage[date] && (
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${getCoverageTone(parsedDayCoverage[date])}`}
+                    >
+                      {parsedDayCoverage[date]}
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => addParsedBusyInterval(date)}
+                    className="rounded-lg border border-slate-300 bg-slate-50 px-2 py-1 text-[11px] font-medium text-slate-700 hover:bg-slate-100"
+                  >
+                    Add
+                  </button>
+                </div>
+              </div>
+              <ul className="space-y-2">
+                {intervals.map((interval, index) => {
+                  const error = validateBusyInterval(interval);
+                  return (
+                    <li key={`${date}-${index}`} className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-2">
+                      <div className="flex flex-wrap items-end gap-2">
+                        <div className="min-w-[90px] flex-1">
+                          <label className="sr-only">Busy start time</label>
+                          <input
+                            type="time"
+                            value={interval.start}
+                            onChange={(e) => updateParsedBusyInterval(date, index, { start: e.target.value })}
+                            className={inputClass}
+                          />
+                        </div>
+                        <span className="text-slate-400 text-xs shrink-0">to</span>
+                        <div className="min-w-[90px] flex-1">
+                          <label className="sr-only">Busy end time</label>
+                          <input
+                            type="time"
+                            value={interval.end}
+                            onChange={(e) => updateParsedBusyInterval(date, index, { end: e.target.value })}
+                            className={inputClass}
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeParsedBusyInterval(date, index)}
+                          className="shrink-0 rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-red-400"
+                          aria-label="Remove busy interval"
+                        >
+                          <TrashIcon />
+                        </button>
+                      </div>
+                      {parsedDayCoverage[date] === "partial" && (
+                        <p className="mt-1.5 text-[11px] text-amber-700">
+                          Possible missing busy blocks on this day. Review before confirming.
+                        </p>
+                      )}
+                      {error && (
+                        <p className="mt-1.5 text-[11px] text-red-600">{error}</p>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <div className="rounded-lg border border-slate-200 bg-white px-3 py-3 text-xs text-slate-500">
+          No confirmed busy intervals were extracted yet.
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <Card
       title="Other person's availability"
@@ -777,20 +931,20 @@ export function OtherPersonAvailabilitySection({
 
           {inputTab === "screenshot" && (
             <>
-              <div className="mb-8 space-y-5 rounded-2xl border border-slate-200 bg-slate-50/80 p-5">
+              <div className="mb-8 space-y-5 rounded-2xl border border-slate-700 bg-slate-900/90 p-5 shadow-[0_18px_40px_rgba(15,23,42,0.28)]">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-sm font-semibold text-slate-800">
+                    <p className="text-sm font-semibold text-slate-100">
                       Working hours baseline
                     </p>
-                    <p className="mt-1 text-xs text-slate-500">
+                    <p className="mt-1 text-xs text-slate-300">
                       Screenshot import only detects confirmed busy times. Availability is derived from these weekly working hours.
                     </p>
                   </div>
                   <button
                     type="button"
                     onClick={() => setScreenshotWorkingHours(createDefaultScreenshotWorkingHours())}
-                    className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                    className="rounded-lg border border-slate-600 bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-100 hover:bg-slate-700"
                   >
                     Reset to 9-5
                   </button>
@@ -799,10 +953,10 @@ export function OtherPersonAvailabilitySection({
                   {WEEKDAYS.map(({ key, short }) => {
                     const activeWindow = screenshotWorkingHours[key]?.[0] ?? null;
                     return (
-                      <div key={`screenshot-hours-${key}`} className="rounded-xl border border-slate-200 bg-white p-3.5">
+                      <div key={`screenshot-hours-${key}`} className="rounded-xl border border-slate-700 bg-slate-800/90 p-3.5">
                         <div className="mb-2 flex items-center justify-between">
-                          <p className="text-sm font-medium text-slate-800">{short}</p>
-                          <label className="inline-flex items-center gap-2 text-xs text-slate-600">
+                          <p className="text-sm font-medium text-slate-100">{short}</p>
+                          <label className="inline-flex items-center gap-2 text-xs text-slate-300">
                             <input
                               type="checkbox"
                               checked={activeWindow != null}
@@ -843,7 +997,7 @@ export function OtherPersonAvailabilitySection({
                             />
                           </div>
                         ) : (
-                          <p className="text-xs text-slate-500">Ignored when deriving availability.</p>
+                          <p className="text-xs text-slate-400">Ignored when deriving availability.</p>
                         )}
                       </div>
                     );
@@ -855,8 +1009,8 @@ export function OtherPersonAvailabilitySection({
                 <div
                   className={`rounded-2xl border-2 border-dashed px-6 py-14 text-center transition-colors ${
                     isDragging
-                      ? "border-emerald-400 bg-emerald-50/50"
-                      : "border-slate-300 bg-slate-50/80"
+                      ? "border-emerald-400 bg-slate-800/95 shadow-[0_18px_40px_rgba(16,185,129,0.12)]"
+                      : "border-slate-600 bg-slate-900/90 shadow-[0_18px_40px_rgba(15,23,42,0.32)]"
                   }`}
                   onDragOver={(e) => {
                     e.preventDefault();
@@ -873,28 +1027,36 @@ export function OtherPersonAvailabilitySection({
                     if (file) handleFileSelect(file);
                   }}
                 >
-                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-slate-300 bg-white/70 text-slate-500">
+                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-slate-500 bg-slate-800 text-slate-100">
                     <span className="[&_svg]:h-8 [&_svg]:w-8">
                       <UploadIcon />
                     </span>
                   </div>
-                  <p className="mt-5 text-base font-semibold text-slate-700">
+                  <p className="mt-5 text-base font-semibold text-slate-100">
                     Drag and drop a screenshot here
                   </p>
-                  <p className="mt-2 text-sm text-slate-500">
+                  <p className="mt-2 text-sm text-slate-300">
                     Or choose an image file to detect busy blocks, then derive draft availability from your weekly working hours.
                   </p>
-                  <div className="mt-6 mx-auto max-w-sm rounded-lg border border-slate-200 bg-white/60 px-3 py-2.5 text-left">
-                    <p className="text-xs font-semibold text-slate-600 mb-1.5">
+                  <div className="mt-6 mx-auto max-w-xl rounded-xl border border-slate-700 bg-slate-800/90 px-4 py-4 text-left">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-300 mb-2">
+                      How It Works
+                    </p>
+                    <ol className="space-y-1.5 text-xs text-slate-200">
+                      <li>1. Upload a weekly calendar screenshot with visible day columns and event blocks.</li>
+                      <li>2. SyncPrep extracts draft busy times only, then subtracts them from the working hours above.</li>
+                      <li>3. Review the busy intervals, add anything missing, and confirm the derived availability.</li>
+                    </ol>
+                    <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-slate-300 mb-1.5">
                       For best results, your screenshot should:
                     </p>
-                    <ul className="text-xs text-slate-600 space-y-1 list-disc list-inside">
+                    <ul className="text-xs text-slate-200 space-y-1 list-disc list-inside">
                       <li>Show a <strong>week view</strong> with day columns (e.g. Sun, Mon, Tue)</li>
                       <li>Include <strong>day headers</strong> at the top (dates or day names visible)</li>
                       <li>Have <strong>clear event blocks</strong> with visible start/end times</li>
                       <li>Be <strong>JPEG, PNG, or WebP</strong> under 10 MB</li>
                     </ul>
-                    <p className="text-xs text-slate-500 mt-1.5">
+                    <p className="text-xs text-slate-400 mt-2">
                       Blurry or cropped screenshots may miss some days. You can always add or edit times after.
                     </p>
                   </div>
@@ -912,7 +1074,7 @@ export function OtherPersonAvailabilitySection({
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="mt-6 inline-flex items-center gap-2 rounded-xl border-2 border-emerald-300 bg-emerald-50 px-5 py-3 text-sm font-medium text-emerald-800 hover:bg-emerald-100"
+                    className="mt-6 inline-flex items-center gap-2 rounded-xl border border-emerald-400 bg-emerald-500/15 px-5 py-3 text-sm font-medium text-emerald-200 hover:bg-emerald-500/25"
                   >
                     <UploadIcon />
                     Choose image
@@ -964,37 +1126,7 @@ export function OtherPersonAvailabilitySection({
                     </p>
                   </div>
                   <div className="rounded-lg border border-slate-200 bg-slate-50/80 px-3 py-3">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
-                      Confirmed busy intervals
-                    </p>
-                    {Object.keys(parsedBusyByDate).length > 0 ? (
-                      <ul className="mt-2 space-y-2">
-                        {Object.entries(parsedBusyByDate).map(([date, intervals]) => (
-                          <li
-                            key={`busy-${date}`}
-                            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700"
-                          >
-                            <div className="flex items-center justify-between gap-2">
-                              <span className="font-medium">{date}</span>
-                              {parsedDayCoverage[date] && (
-                                <span
-                                  className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${getCoverageTone(parsedDayCoverage[date])}`}
-                                >
-                                  {parsedDayCoverage[date]}
-                                </span>
-                              )}
-                            </div>
-                            <p className="mt-1 text-slate-600">
-                              {intervals.map((interval) => `${interval.start}-${interval.end}`).join(", ")}
-                            </p>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p className="mt-2 text-xs text-slate-500">
-                        No confirmed busy intervals were extracted.
-                      </p>
-                    )}
+                    {renderBusyIntervalList()}
                   </div>
                   {Object.keys(parsedDayCoverage).length > 0 && (
                     <div className="rounded-lg border border-slate-200 bg-slate-50/80 px-3 py-3">

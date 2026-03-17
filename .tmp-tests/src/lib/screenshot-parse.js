@@ -27,6 +27,9 @@ function minutesToTime(totalMinutes) {
     const minutes = bounded % 60;
     return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
 }
+function snapMinutes(totalMinutes, step = 5) {
+    return Math.round(totalMinutes / step) * step;
+}
 function mergeIntervals(intervals) {
     const sorted = [...intervals].sort((a, b) => a.start.localeCompare(b.start));
     const merged = [];
@@ -136,6 +139,8 @@ function normalizeExplicitBusyIntervals(intervals) {
         interval.start < interval.end)
         .map((interval) => ({
         ...interval,
+        start: minutesToTime(snapMinutes(timeToMinutes(interval.start))),
+        end: minutesToTime(snapMinutes(timeToMinutes(interval.end))),
         overallConfidence: clamp01(interval.overallConfidence ??
             average([
                 clamp01(interval.dateConfidence),
@@ -174,8 +179,8 @@ function deriveBusyIntervalsFromGeometry(columns, axisLabels, busyBlocks, warnin
             continue;
         derived.push({
             date: column.date,
-            start: minutesToTime(startMinutes),
-            end: minutesToTime(endMinutes),
+            start: minutesToTime(snapMinutes(startMinutes)),
+            end: minutesToTime(snapMinutes(endMinutes)),
             dateConfidence: column.confidence,
             timeConfidence,
             blockConfidence: clamp01(block.blockConfidence),

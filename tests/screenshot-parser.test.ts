@@ -246,7 +246,7 @@ test("merges geometry-derived and explicit busy intervals instead of dropping la
   assert.deepEqual(
     result.busyByDate["2025-03-11"]?.map((interval) => [interval.start, interval.end]),
     [
-      ["11:00", "12:12"],
+      ["11:00", "12:10"],
       ["12:30", "13:50"],
       ["16:00", "17:20"],
     ]
