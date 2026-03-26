@@ -9,7 +9,7 @@ import { WeeklyScheduleSection } from "@/components/calendar/WeeklyScheduleSecti
 import { TimezoneFields } from "@/components/scheduler/TimezoneFields";
 import { DurationSelect } from "@/components/scheduler/DurationSelect";
 import { WorkingHoursInput } from "@/components/scheduler/WorkingHoursInput";
-import { CalendarIcon } from "@/components/ui/Icons";
+import { Calendar, Settings, ChevronDown } from "lucide-react";
 
 interface ScheduleSetupSectionProps {
   zoneA: string;
@@ -38,20 +38,25 @@ function StepHeader({
   status: string;
 }) {
   return (
-    <div className="flex flex-col gap-3 border-b border-slate-200/80 px-6 py-6 sm:px-8">
-      <div className="flex flex-wrap items-center gap-3">
-        <span className="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-blue-700">
+    <div className="flex flex-col gap-4 border-b border-[var(--border)] px-6 py-5">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="step-badge step-badge-small">1</span>
+        <span className="text-xs font-medium text-[var(--foreground-muted)] uppercase tracking-wider">
           {step}
         </span>
-        <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
+        <span className={`ml-auto inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+          status.includes("connected") 
+            ? "bg-green-500/15 text-green-400" 
+            : "bg-[var(--accent-soft)] text-[var(--accent)]"
+        }`}>
           {status}
         </span>
       </div>
       <div>
-        <h2 className="text-xl font-semibold tracking-tight text-slate-900">
+        <h2 className="text-lg font-semibold text-[var(--foreground)]">
           {title}
         </h2>
-        <p className="mt-1.5 max-w-2xl text-sm leading-6 text-slate-600">
+        <p className="mt-1 text-sm text-[var(--foreground-muted)] leading-relaxed">
           {description}
         </p>
       </div>
@@ -67,11 +72,12 @@ function MobilePreviewAccordion({
   children: ReactNode;
 }) {
   return (
-    <details className="lg:hidden rounded-2xl border border-slate-200 bg-slate-50/90">
-      <summary className="cursor-pointer list-none px-4 py-3 text-sm font-medium text-slate-700">
+    <details className="lg:hidden rounded-xl border border-[var(--border)] bg-[var(--background)]">
+      <summary className="cursor-pointer list-none px-4 py-3 text-sm font-medium text-[var(--foreground)] flex items-center justify-between">
         {title}
+        <ChevronDown className="w-4 h-4 text-[var(--foreground-muted)]" />
       </summary>
-      <div className="border-t border-slate-200 px-4 py-4">{children}</div>
+      <div className="border-t border-[var(--border)] px-4 py-4">{children}</div>
     </details>
   );
 }
@@ -91,33 +97,39 @@ export function ScheduleSetupSection({
   onCalendarChange,
 }: ScheduleSetupSectionProps) {
   return (
-    <section className="schedule-medium-panel overflow-hidden rounded-[28px] border border-slate-700 bg-slate-900/70 shadow-sm">
+    <section className="section-card">
       <StepHeader
         step="Step 1 of 4"
         title="Your availability"
-        description="Connect your calendar, set your time zone, and define the hours you want SyncPrep to search."
+        description="Connect your calendar, set your time zone, and define your working hours."
         status={calendarConnected ? "Calendar connected" : "Setup in progress"}
       />
-      <div className="px-6 py-6 sm:px-8 sm:py-8">
+      <div className="px-6 py-6">
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1.65fr)_minmax(280px,1fr)] lg:items-start">
           <div className="space-y-5">
-            <div className="rounded-3xl border border-slate-700 bg-slate-900/70 p-5 shadow-[0_14px_28px_-18px_rgba(15,23,42,0.85)]">
+            {/* Calendar Sync Card */}
+            <div className="rounded-xl border border-[var(--border)] bg-[var(--background)] p-5">
               <div className="mb-4 flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-sm font-semibold text-slate-900">
-                    Calendar sync
-                  </p>
-                  <p className="mt-1 text-sm text-slate-600">
-                    {calendarConnected
-                      ? "Busy blocks are shaping your available times."
-                      : "Connect Google Calendar for a more accurate schedule."}
-                  </p>
+                <div className="flex items-start gap-3">
+                  <div className="section-icon">
+                    <Calendar className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-[var(--foreground)]">
+                      Calendar sync
+                    </p>
+                    <p className="mt-1 text-sm text-[var(--foreground-muted)]">
+                      {calendarConnected
+                        ? "Busy blocks are shaping your available times."
+                        : "Connect Google Calendar for accurate availability."}
+                    </p>
+                  </div>
                 </div>
                 <span
-                  className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${
+                  className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
                     calendarConnected
-                      ? "bg-emerald-50 text-emerald-700"
-                      : "bg-slate-100 text-slate-600"
+                      ? "bg-green-500/15 text-green-400"
+                      : "bg-[var(--foreground-subtle)]/20 text-[var(--foreground-muted)]"
                   }`}
                 >
                   {calendarConnected ? "Live" : "Optional"}
@@ -130,14 +142,20 @@ export function ScheduleSetupSection({
               />
             </div>
 
-            <div className="rounded-3xl border border-slate-700 bg-slate-900/70 p-5 shadow-[0_14px_28px_-18px_rgba(15,23,42,0.85)]">
-              <div className="mb-5">
-                <p className="text-sm font-semibold text-slate-900">
-                  Search settings
-                </p>
-                <p className="mt-1 text-sm text-slate-600">
-                  These settings define the time range used in slot matching.
-                </p>
+            {/* Search Settings Card */}
+            <div className="rounded-xl border border-[var(--border)] bg-[var(--background)] p-5">
+              <div className="mb-5 flex items-start gap-3">
+                <div className="section-icon">
+                  <Settings className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-[var(--foreground)]">
+                    Search settings
+                  </p>
+                  <p className="mt-1 text-sm text-[var(--foreground-muted)]">
+                    Define the time range for slot matching.
+                  </p>
+                </div>
               </div>
               <div className="grid gap-5 md:grid-cols-2">
                 <div className="md:col-span-2">
@@ -159,7 +177,7 @@ export function ScheduleSetupSection({
                   helperText={
                     calendarConnected
                       ? "Used with your calendar to find free slots."
-                      : "Your general availability if no calendar events are connected."
+                      : "Your general availability window."
                   }
                 />
               </div>
@@ -177,17 +195,18 @@ export function ScheduleSetupSection({
             </MobilePreviewAccordion>
           </div>
 
-          <aside className="schedule-support-panel hidden rounded-3xl border border-slate-700 bg-slate-900/50 p-4 lg:block">
+          {/* Weekly Context Sidebar */}
+          <aside className="hidden rounded-xl border border-[var(--border)] bg-[var(--background-elevated)] p-4 lg:block">
             <div className="mb-4 flex items-start gap-3">
-              <span className="rounded-2xl bg-white p-2 text-slate-500 shadow-sm">
-                <CalendarIcon />
-              </span>
+              <div className="section-icon">
+                <Calendar className="w-4 h-4" />
+              </div>
               <div>
-                <p className="text-sm font-semibold text-slate-900">
+                <p className="text-sm font-semibold text-[var(--foreground)]">
                   Weekly context
                 </p>
-                <p className="mt-1 text-sm text-slate-600">
-                  Supporting view only. Use it to verify the week you are searching.
+                <p className="mt-1 text-xs text-[var(--foreground-muted)]">
+                  Preview of your week ahead
                 </p>
               </div>
             </div>

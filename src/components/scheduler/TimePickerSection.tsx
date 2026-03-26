@@ -7,7 +7,7 @@ import type { CalendarEventItem } from "@/types/calendar";
 import type { TimeWindow } from "@/types";
 import { OverlapResults } from "@/components/scheduler/OverlapResults";
 import { WeeklyScheduleSection } from "@/components/calendar/WeeklyScheduleSection";
-import { CalendarIcon, ClockIcon } from "@/components/ui/Icons";
+import { Calendar, Clock, ChevronDown } from "lucide-react";
 
 interface TimePickerSectionProps {
   useTwoPersonOverlap: boolean;
@@ -43,20 +43,25 @@ function StepHeader({
   status: string;
 }) {
   return (
-    <div className="flex flex-col gap-3 border-b border-slate-200/80 px-6 py-6 sm:px-8">
-      <div className="flex flex-wrap items-center gap-3">
-        <span className="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-blue-700">
+    <div className="flex flex-col gap-4 border-b border-[var(--border)] px-6 py-5">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="step-badge step-badge-small">3</span>
+        <span className="text-xs font-medium text-[var(--foreground-muted)] uppercase tracking-wider">
           {step}
         </span>
-        <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
+        <span className={`ml-auto inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+          status.includes("selected") 
+            ? "bg-green-500/15 text-green-400" 
+            : "bg-[var(--accent-soft)] text-[var(--accent)]"
+        }`}>
           {status}
         </span>
       </div>
       <div>
-        <h2 className="text-xl font-semibold tracking-tight text-slate-900">
+        <h2 className="text-lg font-semibold text-[var(--foreground)]">
           {title}
         </h2>
-        <p className="mt-1.5 max-w-2xl text-sm leading-6 text-slate-600">
+        <p className="mt-1 text-sm text-[var(--foreground-muted)] leading-relaxed">
           {description}
         </p>
       </div>
@@ -72,11 +77,12 @@ function MobilePreviewAccordion({
   children: ReactNode;
 }) {
   return (
-    <details className="lg:hidden rounded-2xl border border-slate-200 bg-slate-50/90">
-      <summary className="cursor-pointer list-none px-4 py-3 text-sm font-medium text-slate-700">
+    <details className="lg:hidden rounded-xl border border-[var(--border)] bg-[var(--background)]">
+      <summary className="cursor-pointer list-none px-4 py-3 text-sm font-medium text-[var(--foreground)] flex items-center justify-between">
         {title}
+        <ChevronDown className="w-4 h-4 text-[var(--foreground-muted)]" />
       </summary>
-      <div className="border-t border-slate-200 px-4 py-4">{children}</div>
+      <div className="border-t border-[var(--border)] px-4 py-4">{children}</div>
     </details>
   );
 }
@@ -89,7 +95,7 @@ function getStatusText(
   if (selectedSlot) return "Slot selected";
   if (!validationCanCompute) return "Waiting for setup";
   if (availabilityByDay.length === 0) return "No slots yet";
-  return "Choose a recommended time";
+  return "Choose a time";
 }
 
 export function TimePickerSection({
@@ -114,28 +120,34 @@ export function TimePickerSection({
   onSelectSlot,
 }: TimePickerSectionProps) {
   return (
-    <section className="schedule-medium-panel overflow-hidden rounded-[28px] border border-slate-700 bg-slate-900/70 shadow-sm">
+    <section className="section-card">
       <StepHeader
         step="Step 3 of 4"
         title="Pick a time"
-        description="Start with the recommended options, then check the full day list if you need alternatives."
+        description="Select a recommended time slot, or browse alternatives by day."
         status={getStatusText(validationCanCompute, availabilityByDay, selectedSlot)}
       />
-      <div className="px-6 py-6 sm:px-8 sm:py-8">
+      <div className="px-6 py-6">
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1.65fr)_minmax(280px,1fr)] lg:items-start">
           <div className="space-y-5">
+            {/* Day Selector */}
             {validationCanCompute && availabilityByDay.length > 0 && (
-              <div className="rounded-3xl border border-slate-700 bg-slate-900/65 p-4 shadow-[0_12px_24px_-18px_rgba(15,23,42,0.9)]">
-                <div className="mb-3 flex items-center justify-between gap-4">
-                  <div>
-                    <p className="text-sm font-semibold text-slate-900">
-                      Choose a day first
-                    </p>
-                    <p className="mt-1 text-sm text-slate-600">
-                      Day pills narrow the list so recommended times stay easy to scan.
-                    </p>
+              <div className="rounded-xl border border-[var(--border)] bg-[var(--background)] p-4">
+                <div className="mb-4 flex items-center justify-between gap-4">
+                  <div className="flex items-start gap-3">
+                    <div className="section-icon">
+                      <Calendar className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-[var(--foreground)]">
+                        Select a day
+                      </p>
+                      <p className="mt-1 text-xs text-[var(--foreground-muted)]">
+                        Filter available times by day
+                      </p>
+                    </div>
                   </div>
-                  <span className="hidden rounded-full bg-white px-3 py-1 text-xs font-medium text-blue-700 shadow-sm sm:inline-flex">
+                  <span className="hidden sm:inline-flex items-center rounded-full bg-[var(--accent-soft)] px-2.5 py-0.5 text-xs font-medium text-[var(--accent)]">
                     {availabilityByDay.length} active day{availabilityByDay.length === 1 ? "" : "s"}
                   </span>
                 </div>
@@ -149,18 +161,12 @@ export function TimePickerSection({
                         role="tab"
                         aria-selected={isSelected}
                         onClick={() => onSelectDay(day.date)}
-                        className={`rounded-2xl border px-4 py-3 text-left text-sm font-medium transition-all duration-200 ${
-                          isSelected
-                            ? "border-blue-500 bg-blue-600 text-white shadow-lg shadow-blue-500/20"
-                            : "border-white bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50"
-                        }`}
+                        className={`day-tab ${isSelected ? "day-tab-active" : ""}`}
                       >
-                        <span className="block">{day.label}</span>
-                        <span
-                          className={`mt-1 block text-xs tabular-nums ${
-                            isSelected ? "text-blue-100" : "text-slate-500"
-                          }`}
-                        >
+                        <span className="block font-medium">{day.label}</span>
+                        <span className={`mt-0.5 block text-xs tabular-nums ${
+                          isSelected ? "text-[var(--accent)]" : "text-[var(--foreground-subtle)]"
+                        }`}>
                           {day.slots.length} slot{day.slots.length === 1 ? "" : "s"}
                         </span>
                       </button>
@@ -170,7 +176,8 @@ export function TimePickerSection({
               </div>
             )}
 
-            <div className="schedule-primary-panel rounded-3xl border border-blue-500/50 bg-slate-900/85 p-1 shadow-[0_24px_48px_-22px_rgba(37,99,235,0.6)]">
+            {/* Time Slot Grid */}
+            <div className="rounded-xl border border-[var(--border-accent)] bg-[var(--background-card)] p-4 shadow-lg shadow-[var(--accent-glow)]/10">
               <OverlapResults
                 allSlots={allSlots}
                 slotsForSelectedDay={selectedDaySlots}
@@ -199,17 +206,18 @@ export function TimePickerSection({
             </MobilePreviewAccordion>
           </div>
 
-          <aside className="schedule-support-panel hidden rounded-3xl border border-slate-700 bg-slate-900/45 p-4 lg:block">
+          {/* Weekly Context Sidebar */}
+          <aside className="hidden rounded-xl border border-[var(--border)] bg-[var(--background-elevated)] p-4 lg:block">
             <div className="mb-4 flex items-start gap-3">
-              <span className="rounded-2xl bg-white p-2 text-slate-500 shadow-sm">
-                <CalendarIcon />
-              </span>
+              <div className="section-icon">
+                <Calendar className="w-4 h-4" />
+              </div>
               <div>
-                <p className="text-sm font-semibold text-slate-900">
-                  Weekly schedule context
+                <p className="text-sm font-semibold text-[var(--foreground)]">
+                  Weekly context
                 </p>
-                <p className="mt-1 text-sm text-slate-600">
-                  Supporting context only. Keep the slot list as the main decision surface.
+                <p className="mt-1 text-xs text-[var(--foreground-muted)]">
+                  Verify your selection against the week
                 </p>
               </div>
             </div>
@@ -221,17 +229,17 @@ export function TimePickerSection({
               selectedSlot={selectedSlot}
             />
             {!selectedSlot && (
-              <div className="mt-4 rounded-2xl border border-slate-700 bg-slate-900/70 px-4 py-3">
+              <div className="mt-4 rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3">
                 <div className="flex items-start gap-3">
-                  <span className="rounded-xl bg-slate-100 p-2 text-slate-500">
-                    <ClockIcon />
-                  </span>
+                  <div className="section-icon">
+                    <Clock className="w-4 h-4" />
+                  </div>
                   <div>
-                    <p className="text-sm font-medium text-slate-900">
-                      Decision rule
+                    <p className="text-sm font-medium text-[var(--foreground)]">
+                      Tip
                     </p>
-                    <p className="mt-1 text-sm text-slate-600">
-                      Pick a recommended time first. Use the weekly view only to sanity-check conflicts.
+                    <p className="mt-1 text-xs text-[var(--foreground-muted)]">
+                      Pick a recommended time first. Use the weekly view to sanity-check conflicts.
                     </p>
                   </div>
                 </div>

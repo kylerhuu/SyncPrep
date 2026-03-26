@@ -456,20 +456,21 @@ export default function SchedulePage() {
   }, []);
 
   return (
-    <div ref={wrapperRef} className="schedule-dark-tech min-h-screen flex flex-col">
-      <div className="schedule-bg-layer" aria-hidden>
+    <div ref={wrapperRef} className="page-dark min-h-screen flex flex-col">
+      <div className="fixed inset-0 z-0 pointer-events-none" aria-hidden>
         <ScheduleBackground />
       </div>
-      <div className="schedule-content relative z-10 flex flex-col flex-1">
+      <div className="page-grid" aria-hidden />
+      <div className="page-content relative z-10 flex flex-col flex-1">
       <AppNav />
 
-      <main className="flex-1 w-full max-w-6xl mx-auto px-5 py-12 sm:px-6 sm:py-14 relative">
-        <div className="mb-12 max-w-2xl">
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+      <main className="flex-1 w-full max-w-6xl mx-auto px-5 py-10 sm:px-6 sm:py-12 relative">
+        <div className="mb-10 max-w-2xl">
+          <h1 className="text-2xl sm:text-3xl font-bold text-[var(--foreground)] tracking-tight">
             Schedule & prepare
           </h1>
-          <p className="mt-2 text-slate-600 leading-relaxed">
-            Move from availability setup to confirmation without losing context.
+          <p className="mt-2 text-[var(--foreground-muted)] leading-relaxed">
+            Set your availability, find overlap, and prepare for your meeting.
           </p>
         </div>
 

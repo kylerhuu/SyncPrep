@@ -11,6 +11,7 @@ import type { OverlapSlotResult } from "@/lib/timezone";
 import { AppNav } from "@/components/nav/AppNav";
 import { AppFooter } from "@/components/nav/AppFooter";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import { ArrowRight } from "lucide-react";
 
 const STORAGE_KEYS = {
   zoneA: "syncprep_zoneA",
@@ -183,78 +184,85 @@ export default function CalendarPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col bg-app-canvas">
-        <AppNav />
-        <main className="flex-1 max-w-5xl w-full mx-auto px-5 py-8">
-          <div className="py-12">
-            <LoadingSpinner label="Loading calendar…" size="md" />
-          </div>
-        </main>
+      <div className="page-dark min-h-screen flex flex-col">
+        <div className="page-grid" aria-hidden />
+        <div className="page-content flex flex-col flex-1">
+          <AppNav />
+          <main className="flex-1 max-w-5xl w-full mx-auto px-5 py-8">
+            <div className="py-12">
+              <LoadingSpinner label="Loading calendar..." size="md" />
+            </div>
+          </main>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-app-canvas">
-      <AppNav />
+    <div className="page-dark min-h-screen flex flex-col">
+      <div className="page-grid" aria-hidden />
+      <div className="page-content flex flex-col flex-1">
+        <AppNav />
 
-      <main className="flex-1 max-w-5xl w-full mx-auto px-5 py-8">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-            Weekly schedule
-          </h1>
-          <p className="mt-2 text-sm text-slate-500">
-            Your week at a glance—busy blocks and open gaps.
-          </p>
-        </div>
-
-        {!connected ? (
-          <div className="rounded-2xl border-2 border-slate-200 bg-surface-elevated px-5 py-8 text-center">
-            <p className="text-sm text-slate-600 mb-4">
-              Connect Google Calendar on the Schedule page to see your week here.
-            </p>
-            <Link
-              href="/schedule"
-              className="inline-flex items-center justify-center rounded-xl bg-[var(--accent-navy)] text-white text-sm font-semibold px-5 py-2.5 shadow-lg shadow-slate-900/10 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200"
-            >
-              Go to Schedule
-            </Link>
-          </div>
-        ) : !zone.trim() ? (
-          <div className="rounded-2xl border-2 border-slate-200 bg-surface-elevated px-5 py-8 text-center">
-            <p className="text-sm text-slate-600">
-              Set your time zone on Schedule to see your week.
+        <main className="flex-1 max-w-5xl w-full mx-auto px-5 py-8">
+          <div className="mb-8">
+            <h1 className="text-2xl font-bold text-[var(--foreground)] tracking-tight">
+              Weekly schedule
+            </h1>
+            <p className="mt-2 text-sm text-[var(--foreground-muted)]">
+              Your week at a glance—busy blocks and open availability.
             </p>
           </div>
-        ) : (
-          <>
-            <WeekViewTimeline
-              weekLabel={weekLabel}
-              dayLabels={dayLabels}
-              daySublabels={daySublabels}
-              startHour={START_HOUR}
-              endHour={END_HOUR}
-              blocks={blocks}
-              zone={iana}
-            />
-            <div className="mt-6 flex flex-wrap gap-6 text-xs text-slate-600 bg-surface-elevated rounded-xl px-5 py-3.5 border border-slate-200/80 max-w-md shadow-sm">
-              <span className="flex items-center gap-2">
-                <span className="h-4 w-4 rounded-lg bg-gradient-to-br from-amber-300 to-amber-400 border border-amber-500/50 shrink-0 shadow-sm" />
-                <span className="font-semibold text-slate-700">Busy</span>
-              </span>
-              <span className="flex items-center gap-2">
-                <span className="h-4 w-4 rounded-lg bg-gradient-to-br from-emerald-300 to-teal-300 border border-emerald-500/50 shrink-0 shadow-sm" />
-                <span className="font-semibold text-slate-700">Available</span>
-              </span>
-              <span className="flex items-center gap-2">
-                <span className="h-4 w-4 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 shrink-0 shadow-md ring-1 ring-blue-400/50" />
-                <span className="font-semibold text-slate-700">Selected meeting</span>
-              </span>
+
+          {!connected ? (
+            <div className="section-card px-6 py-10 text-center">
+              <p className="text-sm text-[var(--foreground-muted)] mb-5">
+                Connect Google Calendar on the Schedule page to see your week here.
+              </p>
+              <Link
+                href="/schedule"
+                className="btn-primary inline-flex items-center gap-2"
+              >
+                Go to Schedule
+                <ArrowRight className="w-4 h-4" />
+              </Link>
             </div>
-          </>
-        )}
-      </main>
-      <AppFooter />
+          ) : !zone.trim() ? (
+            <div className="section-card px-6 py-10 text-center">
+              <p className="text-sm text-[var(--foreground-muted)]">
+                Set your time zone on Schedule to see your week.
+              </p>
+            </div>
+          ) : (
+            <>
+              <WeekViewTimeline
+                weekLabel={weekLabel}
+                dayLabels={dayLabels}
+                daySublabels={daySublabels}
+                startHour={START_HOUR}
+                endHour={END_HOUR}
+                blocks={blocks}
+                zone={iana}
+              />
+              <div className="mt-6 flex flex-wrap gap-6 text-xs text-[var(--foreground-muted)] rounded-xl px-5 py-3.5 border border-[var(--border)] bg-[var(--background-card)] max-w-md">
+                <span className="flex items-center gap-2">
+                  <span className="h-4 w-4 rounded bg-amber-500/60 border border-amber-500/80 shrink-0" />
+                  <span className="font-medium text-[var(--foreground)]">Busy</span>
+                </span>
+                <span className="flex items-center gap-2">
+                  <span className="h-4 w-4 rounded bg-green-500/60 border border-green-500/80 shrink-0" />
+                  <span className="font-medium text-[var(--foreground)]">Available</span>
+                </span>
+                <span className="flex items-center gap-2">
+                  <span className="h-4 w-4 rounded bg-[var(--accent)] shrink-0" />
+                  <span className="font-medium text-[var(--foreground)]">Selected</span>
+                </span>
+              </div>
+            </>
+          )}
+        </main>
+        <AppFooter />
+      </div>
     </div>
   );
 }

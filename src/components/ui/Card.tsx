@@ -7,7 +7,7 @@ interface CardProps {
   headerAction?: ReactNode;
   children: ReactNode;
   className?: string;
-  /** Use for AI/meeting brief cards - adds subtle blue tint */
+  /** Use for AI/meeting brief cards - adds accent tint */
   variant?: "default" | "ai";
 }
 
@@ -15,20 +15,26 @@ export function Card({ title, icon, headerAction, children, className = "", vari
   const isAi = variant === "ai";
   return (
     <div
-      className={`rounded-2xl border border-slate-200/80 overflow-hidden shadow-sm card-hover ${isAi ? "bg-section-ai" : "bg-surface-elevated"} ${className}`}
+      className={`rounded-xl border overflow-hidden transition-all duration-200 ${
+        isAi 
+          ? "border-[var(--border-accent)] bg-[var(--background-card)] shadow-lg shadow-[var(--accent-glow)]/10" 
+          : "border-[var(--border)] bg-[var(--background-card)] hover:border-[var(--border-strong)]"
+      } ${className}`}
     >
       {title && (
-        <div className={`border-b border-slate-200/80 px-5 py-4 flex items-center justify-between gap-2.5 ${isAi ? "bg-gradient-to-r from-blue-50 via-indigo-50/80 to-white" : "bg-gradient-to-r from-slate-50 to-white"}`}>
+        <div className={`border-b border-[var(--border)] px-4 py-3 flex items-center justify-between gap-2.5 ${
+          isAi ? "bg-[var(--accent-soft)]" : "bg-[var(--background-elevated)]"
+        }`}>
           <div className="flex items-center gap-2.5 min-w-0">
-            {icon}
-            <h2 className="text-sm font-semibold tracking-tight text-slate-800 truncate">
+            {icon && <span className="text-[var(--accent)]">{icon}</span>}
+            <h2 className="text-sm font-semibold text-[var(--foreground)] truncate">
               {title}
             </h2>
           </div>
           {headerAction != null ? <div className="shrink-0">{headerAction}</div> : null}
         </div>
       )}
-      <div className="p-5">{children}</div>
+      <div className="p-4">{children}</div>
     </div>
   );
 }

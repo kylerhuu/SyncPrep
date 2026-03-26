@@ -10,13 +10,7 @@ import { MeetingContextForm } from "@/components/prep/MeetingContextForm";
 import { PrepBriefBody } from "@/components/prep/PrepBriefBody";
 import { Button } from "@/components/ui/Button";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
-import {
-  CalendarIcon,
-  CheckCircleIcon,
-  ClockIcon,
-  DocumentTextIcon,
-  SparklesIcon,
-} from "@/components/ui/Icons";
+import { CheckCircle, Clock, FileText, Sparkles, Calendar, ArrowRight } from "lucide-react";
 
 interface MeetingSummaryRailProps {
   zoneA: string;
@@ -71,13 +65,13 @@ function ProgressRow({
   complete: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between gap-3 rounded-2xl border border-slate-700 bg-slate-800 px-3 py-2.5">
-      <span className="text-sm text-slate-200">{label}</span>
+    <div className="flex items-center justify-between gap-3 rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2.5">
+      <span className="text-sm text-[var(--foreground)]">{label}</span>
       <span
-        className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${
+        className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
           complete
-            ? "bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-500/30"
-            : "bg-slate-700 text-slate-300 ring-1 ring-slate-600"
+            ? "bg-green-500/15 text-green-400"
+            : "bg-[var(--foreground-subtle)]/20 text-[var(--foreground-muted)]"
         }`}
       >
         {complete ? "Ready" : "Pending"}
@@ -114,74 +108,74 @@ export function MeetingSummaryRail({
   const hasPrepInputs = Boolean(context.trim() || resume.trim() || jobDescription.trim());
 
   return (
-    <section
-      className={`meeting-summary-rail overflow-hidden rounded-[28px] border border-slate-700 bg-slate-900/70 shadow-sm ${className}`}
-    >
-      <div className="border-b border-slate-200/80 px-6 py-6">
-        <div className="flex flex-wrap items-center gap-3">
-          <span className="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-blue-700">
+    <section className={`summary-rail ${className}`}>
+      {/* Header */}
+      <div className="border-b border-[var(--border)] pb-5 mb-5">
+        <div className="flex items-center gap-2 mb-3">
+          <span className="step-badge step-badge-small">4</span>
+          <span className="text-xs font-medium text-[var(--foreground-muted)] uppercase tracking-wider">
             Step 4 of 4
           </span>
-          <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
-            Confirm + prepare
-          </span>
         </div>
-        <h2 className="mt-4 text-xl font-semibold tracking-tight text-slate-900">
+        <h2 className="text-lg font-semibold text-[var(--foreground)]">
           Meeting summary
         </h2>
-        <p className="mt-1.5 text-sm leading-6 text-slate-600">
-          Confirm the slot, add booking details, and generate a focused meeting brief.
+        <p className="mt-1 text-sm text-[var(--foreground-muted)]">
+          Confirm your selection and generate your meeting brief.
         </p>
       </div>
 
-      <div className="space-y-5 px-6 py-6">
-        <div className="rounded-3xl border border-slate-700 bg-slate-900/65 p-4">
+      <div className="space-y-5">
+        {/* Progress Section */}
+        <div className="rounded-xl border border-[var(--border)] bg-[var(--background-elevated)] p-4">
           <div className="mb-4 flex items-start gap-3">
-            <span className="rounded-2xl bg-white p-2 text-slate-500 shadow-sm">
-              <CheckCircleIcon />
-            </span>
+            <div className="section-icon">
+              <CheckCircle className="w-4 h-4" />
+            </div>
             <div>
-              <p className="text-sm font-semibold text-slate-900">
-                Decision progress
+              <p className="text-sm font-semibold text-[var(--foreground)]">
+                Progress
               </p>
-              <p className="mt-1 text-sm text-slate-600">
-                Keep moving top to bottom. The booking state card becomes primary once a slot is selected.
+              <p className="mt-0.5 text-xs text-[var(--foreground-muted)]">
+                Complete each step to finalize
               </p>
             </div>
           </div>
 
           <div className="grid gap-2">
-            <ProgressRow label="Your availability is configured" complete={Boolean(zoneA.trim())} />
+            <ProgressRow label="Availability configured" complete={Boolean(zoneA.trim())} />
             <ProgressRow
-              label="Their availability is usable"
+              label="Their availability added"
               complete={!useTwoPersonOverlap || Boolean(zoneB.trim())}
             />
-            <ProgressRow label="A meeting time is selected" complete={selectedSlot != null} />
-            <ProgressRow label="Prep materials are added" complete={hasPrepInputs} />
+            <ProgressRow label="Time slot selected" complete={selectedSlot != null} />
+            <ProgressRow label="Prep materials added" complete={hasPrepInputs} />
           </div>
 
+          {/* Stats badges */}
           <div className="mt-4 flex flex-wrap gap-2">
-            <span className="inline-flex items-center rounded-full border border-slate-700 bg-slate-800 px-3 py-1 text-xs font-medium text-slate-300">
+            <span className="inline-flex items-center rounded-full bg-[var(--accent-soft)] px-2.5 py-0.5 text-xs font-medium text-[var(--accent)]">
               {duration} min
             </span>
-            <span className="inline-flex items-center rounded-full border border-slate-700 bg-slate-800 px-3 py-1 text-xs font-medium text-slate-300">
-              {daysWithAvailability} day{daysWithAvailability === 1 ? "" : "s"} with slots
+            <span className="inline-flex items-center rounded-full bg-[var(--foreground-subtle)]/20 px-2.5 py-0.5 text-xs font-medium text-[var(--foreground-muted)]">
+              {daysWithAvailability} day{daysWithAvailability === 1 ? "" : "s"} available
             </span>
-            <span className="inline-flex items-center rounded-full border border-slate-700 bg-slate-800 px-3 py-1 text-xs font-medium text-slate-300">
-              {allSlots.length} total option{allSlots.length === 1 ? "" : "s"}
+            <span className="inline-flex items-center rounded-full bg-[var(--foreground-subtle)]/20 px-2.5 py-0.5 text-xs font-medium text-[var(--foreground-muted)]">
+              {allSlots.length} slot{allSlots.length === 1 ? "" : "s"}
             </span>
             <span
-              className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${
+              className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
                 calendarConnected
-                  ? "bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-500/30"
-                  : "bg-slate-800 text-slate-300 ring-1 ring-slate-700"
+                  ? "bg-green-500/15 text-green-400"
+                  : "bg-[var(--foreground-subtle)]/20 text-[var(--foreground-muted)]"
               }`}
             >
-              {calendarConnected ? "Calendar synced" : "Calendar not connected"}
+              {calendarConnected ? "Calendar synced" : "No calendar"}
             </span>
           </div>
         </div>
 
+        {/* Selected Slot or Prompt */}
         {selectedSlot ? (
           <SelectedMeetingCard
             slot={selectedSlot}
@@ -191,59 +185,51 @@ export function MeetingSummaryRail({
             singleUser={!useTwoPersonOverlap}
           />
         ) : (
-          <div className="rounded-3xl border border-blue-500/45 bg-slate-900/80 p-5 shadow-[0_20px_46px_-24px_rgba(37,99,235,0.45)]">
+          <div className="rounded-xl border border-[var(--border-accent)] bg-[var(--background-card)] p-4 shadow-lg shadow-[var(--accent-glow)]/10">
             <div className="flex items-start gap-3">
-              <span className="rounded-2xl bg-white p-2 text-blue-600 shadow-sm">
-                <ClockIcon />
-              </span>
+              <div className="section-icon">
+                <Clock className="w-4 h-4" />
+              </div>
               <div>
-                <p className="text-sm font-semibold text-slate-900">
-                  Choose a slot to unlock booking
+                <p className="text-sm font-semibold text-[var(--foreground)]">
+                  Select a time slot
                 </p>
-                <p className="mt-1 text-sm text-slate-600">
-                  The selected time will appear here with booking fields and cross-timezone details.
+                <p className="mt-0.5 text-xs text-[var(--foreground-muted)]">
+                  The booking details will appear here once selected.
                 </p>
               </div>
             </div>
             {bestOption ? (
-              <div className="mt-4 rounded-2xl border border-slate-700 bg-slate-900/80 px-4 py-3">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-700">
-                  Best upcoming option
+              <div className="mt-4 rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-3">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--accent)]">
+                  Best option
                 </p>
-                <p className="mt-2 text-sm font-medium text-slate-900">
+                <p className="mt-1.5 text-sm font-medium text-[var(--foreground)]">
                   {formatBestOption(bestOption, zoneA)}
                 </p>
-                <p className="mt-1 text-sm text-slate-600">
-                  Start with the recommended list in Step 3, then come back here to confirm.
-                </p>
               </div>
-            ) : (
-              <div className="mt-4 rounded-2xl border border-slate-700 bg-slate-900/80 px-4 py-3">
-                <p className="text-sm text-slate-600">
-                  Finish the availability steps to surface recommended times.
-                </p>
-              </div>
-            )}
+            ) : null}
           </div>
         )}
 
-        <div className="rounded-3xl border border-slate-700 bg-slate-900/70">
-          <div className="border-b border-slate-200/80 px-5 py-4">
+        {/* Meeting Context */}
+        <div className="rounded-xl border border-[var(--border)] bg-[var(--background-elevated)]">
+          <div className="border-b border-[var(--border)] px-4 py-3">
             <div className="flex items-start gap-3">
-              <span className="rounded-2xl bg-slate-100 p-2 text-slate-500">
-                <DocumentTextIcon />
-              </span>
+              <div className="section-icon">
+                <FileText className="w-4 h-4" />
+              </div>
               <div>
-                <p className="text-sm font-semibold text-slate-900">
+                <p className="text-sm font-semibold text-[var(--foreground)]">
                   Meeting context
                 </p>
-                <p className="mt-1 text-sm text-slate-600">
-                  Add notes and materials before generating your brief.
+                <p className="mt-0.5 text-xs text-[var(--foreground-muted)]">
+                  Add details for your brief
                 </p>
               </div>
             </div>
           </div>
-          <div className="p-5">
+          <div className="p-4">
             <MeetingContextForm
               meetingType={meetingType}
               context={context}
@@ -255,67 +241,69 @@ export function MeetingSummaryRail({
               onJobDescriptionChange={onJobDescriptionChange}
               noCard
             />
-            <div className="mt-5 border-t border-slate-200 pt-5">
+            <div className="mt-4 pt-4 border-t border-[var(--border)]">
               <Button
                 onClick={onGeneratePrep}
                 disabled={prepLoading}
-                className="w-full gap-2.5"
+                className="w-full gap-2"
               >
-                <SparklesIcon />
-                {prepLoading ? "Generating brief..." : "Generate meeting brief"}
+                <Sparkles className="w-4 h-4" />
+                {prepLoading ? "Generating..." : "Generate Brief"}
               </Button>
             </div>
           </div>
         </div>
 
-        <div className="rounded-3xl border border-slate-700 bg-slate-900/55">
-          <div className="border-b border-slate-200/80 px-5 py-4">
+        {/* Brief Preview */}
+        <div className="rounded-xl border border-[var(--border)] bg-[var(--background-elevated)]">
+          <div className="border-b border-[var(--border)] px-4 py-3">
             <div className="flex items-start gap-3">
-              <span className="rounded-2xl bg-white p-2 text-slate-500 shadow-sm">
-                <SparklesIcon />
-              </span>
+              <div className="section-icon">
+                <Sparkles className="w-4 h-4" />
+              </div>
               <div>
-                <p className="text-sm font-semibold text-slate-900">
+                <p className="text-sm font-semibold text-[var(--foreground)]">
                   Brief preview
                 </p>
-                <p className="mt-1 text-sm text-slate-600">
-                  Tertiary context. Useful after scheduling, not before.
+                <p className="mt-0.5 text-xs text-[var(--foreground-muted)]">
+                  AI-generated meeting preparation
                 </p>
               </div>
             </div>
           </div>
 
           {prepLoading ? (
-            <div className="flex min-h-[180px] flex-col items-center justify-center px-5 py-10">
-              <LoadingSpinner label="Generating meeting brief..." size="md" />
+            <div className="flex min-h-[120px] flex-col items-center justify-center px-4 py-6">
+              <LoadingSpinner label="Generating..." size="md" />
             </div>
           ) : prepError ? (
-            <div className="px-5 py-5">
-              <p className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            <div className="px-4 py-4">
+              <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-400">
                 {prepError}
               </p>
             </div>
           ) : prepNotes && hasPrepContent(prepNotes) ? (
-            <div className="max-h-[420px] overflow-auto p-5">
+            <div className="max-h-[320px] overflow-auto p-4">
               <PrepBriefBody notes={prepNotes} />
-              <div className="mt-4 border-t border-slate-200 pt-4">
+              <div className="mt-4 border-t border-[var(--border)] pt-4">
                 <Link
                   href="/prep"
-                  className="inline-flex items-center gap-2 text-sm font-medium text-blue-700 hover:text-blue-800 hover:underline"
+                  className="inline-flex items-center gap-2 text-sm font-medium text-[var(--accent)] hover:text-[var(--accent-hover)]"
                 >
-                  <CalendarIcon />
+                  <Calendar className="w-4 h-4" />
                   View full brief
+                  <ArrowRight className="w-3 h-3" />
                 </Link>
               </div>
             </div>
           ) : (
-            <div className="px-5 py-5">
-              <div className="rounded-2xl border border-slate-700 bg-slate-900/75 px-4 py-4">
-                <p className="text-sm font-medium text-slate-900">
+            <div className="px-4 py-4">
+              <div className="rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-3">
+                <p className="text-sm font-medium text-[var(--foreground)]">
                   No brief yet
                 </p>
-                <p className="mt-1 text-sm text-slate-600">
-                  Add context above, then generate a brief with talking points, questions, strengths, and review topics.
+                <p className="mt-1 text-xs text-[var(--foreground-muted)]">
+                  Add context above, then generate your brief.
                 </p>
               </div>
             </div>

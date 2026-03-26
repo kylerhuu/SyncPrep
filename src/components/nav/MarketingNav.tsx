@@ -1,29 +1,27 @@
 import Link from "next/link";
-
-const navLinkClass =
-  "text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors duration-200";
-const primaryButtonClass =
-  "inline-flex items-center justify-center min-h-[36px] rounded-lg px-4 py-2 text-sm font-semibold bg-[var(--accent-navy)] text-white hover:bg-slate-800 border border-transparent shadow-md shadow-slate-900/10 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200";
+import { ArrowRight } from "lucide-react";
 
 export function MarketingNav() {
   return (
-    <header className="border-b border-black/5 bg-white/60 backdrop-blur-[12px] sticky top-0 z-10">
+    <header className="nav-dark sticky top-0 z-50">
       <nav className="max-w-6xl mx-auto px-5 py-3.5 sm:px-6 flex items-center justify-between">
         <Link
           href="/"
-          className="text-lg font-bold tracking-tight text-slate-900 hover:text-slate-700 transition-colors"
+          className="text-lg font-bold tracking-tight text-[var(--foreground)] hover:text-[var(--accent)] transition-colors"
         >
           SyncPrep
         </Link>
-        <div className="flex items-center gap-6">
-          <Link href="/" className={navLinkClass}>
+        
+        <div className="flex items-center gap-2">
+          <Link href="/" className="nav-link nav-link-active">
             Home
           </Link>
-          <Link href="/calendar" className={navLinkClass}>
-            Weekly schedule
+          <Link href="/calendar" className="nav-link">
+            Calendar
           </Link>
-          <Link href="/schedule" className={`${primaryButtonClass} nav-cta`}>
-            Open app
+          <Link href="/schedule" className="nav-cta flex items-center gap-1.5">
+            Open App
+            <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
       </nav>

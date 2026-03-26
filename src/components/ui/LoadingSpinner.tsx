@@ -17,11 +17,11 @@ export function LoadingSpinner({
       aria-label={label ?? "Loading"}
     >
       <span
-        className={`inline-block ${sizeClass} shrink-0 animate-spin rounded-full border-2 border-slate-200/80 border-t-[var(--accent-blue)]`}
+        className={`inline-block ${sizeClass} shrink-0 animate-spin rounded-full border-2 border-[var(--foreground-subtle)]/30 border-t-[var(--accent)]`}
         aria-hidden
       />
       {label && (
-        <span className="text-sm text-slate-500">{label}</span>
+        <span className="text-sm text-[var(--foreground-muted)]">{label}</span>
       )}
     </div>
   );
