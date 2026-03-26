@@ -3,6 +3,7 @@
 import type { OtherPersonWindow, WeeklyPattern } from "@/types";
 import type { ScheduleDayOption } from "@/lib/availability-draft";
 import { OtherPersonAvailabilitySection as OtherPersonAvailabilityEditor } from "@/components/scheduler/OtherPersonAvailabilitySection";
+import { Users } from "lucide-react";
 
 interface OtherAvailabilitySectionProps {
   scheduleDays: ScheduleDayOption[];
@@ -26,20 +27,25 @@ function StepHeader({
   status: string;
 }) {
   return (
-    <div className="flex flex-col gap-3 border-b border-slate-200/80 px-6 py-6 sm:px-8">
-      <div className="flex flex-wrap items-center gap-3">
-        <span className="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-blue-700">
+    <div className="flex flex-col gap-4 border-b border-[var(--border)] px-6 py-5">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="step-badge step-badge-small">2</span>
+        <span className="text-xs font-medium text-[var(--foreground-muted)] uppercase tracking-wider">
           {step}
         </span>
-        <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
+        <span className={`ml-auto inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+          status.includes("added") 
+            ? "bg-green-500/15 text-green-400" 
+            : "bg-[var(--accent-soft)] text-[var(--accent)]"
+        }`}>
           {status}
         </span>
       </div>
       <div>
-        <h2 className="text-xl font-semibold tracking-tight text-slate-900">
+        <h2 className="text-lg font-semibold text-[var(--foreground)]">
           {title}
         </h2>
-        <p className="mt-1.5 max-w-2xl text-sm leading-6 text-slate-600">
+        <p className="mt-1 text-sm text-[var(--foreground-muted)] leading-relaxed">
           {description}
         </p>
       </div>
@@ -67,15 +73,15 @@ export function OtherAvailabilitySection({
   onWeeklyPatternChange,
 }: OtherAvailabilitySectionProps) {
   return (
-    <section className="schedule-medium-panel overflow-hidden rounded-[28px] border border-slate-700 bg-slate-900/70 shadow-sm">
+    <section className="section-card">
       <StepHeader
         step="Step 2 of 4"
         title="Their availability"
-        description="Collect the other person's time zone and availability using a weekly pattern, specific dates, or a screenshot import."
+        description="Add the other person&apos;s time zone and availability using a weekly pattern or specific dates."
         status={getStatusText(zoneB, windows, weeklyPattern)}
       />
-      <div className="px-6 py-6 sm:px-8 sm:py-8">
-        <div className="rounded-3xl border border-slate-700 bg-slate-900/70 shadow-[0_14px_28px_-18px_rgba(15,23,42,0.85)]">
+      <div className="px-6 py-6">
+        <div className="rounded-xl border border-[var(--border)] bg-[var(--background)]">
           <OtherPersonAvailabilityEditor
             scheduleDays={scheduleDays}
             zoneB={zoneB}

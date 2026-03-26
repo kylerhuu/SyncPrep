@@ -2,7 +2,7 @@
  * Inline SVG icons for section headers. No external dependency.
  */
 
-const iconClass = "w-5 h-5 shrink-0 text-slate-500";
+const iconClass = "w-5 h-5 shrink-0 text-[var(--foreground-muted)]";
 
 export function ClockIcon() {
   return (
@@ -45,7 +45,7 @@ export function SparklesIcon() {
   );
 }
 
-const sectionIconClass = "w-4 h-4 shrink-0 text-slate-500";
+const sectionIconClass = "w-4 h-4 shrink-0 text-[var(--foreground-muted)]";
 
 export function OverviewIcon() {
   return (

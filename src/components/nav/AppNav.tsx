@@ -2,42 +2,44 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-
-const navLinkClass =
-  "text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors duration-200";
-const navLinkActiveClass = "text-slate-900 font-semibold";
+import { Calendar, LayoutGrid, Home } from "lucide-react";
 
 export function AppNav() {
   const pathname = usePathname();
 
+  const isActive = (path: string) => pathname === path;
+
   return (
-    <header className="border-b border-slate-200/80 bg-white/95 backdrop-blur-sm sticky top-0 z-10 shadow-sm">
+    <header className="nav-dark sticky top-0 z-50">
       <nav className="max-w-6xl mx-auto px-5 py-3.5 sm:px-6 flex items-center justify-between">
         <Link
           href="/schedule"
-          className="text-lg font-bold tracking-tight text-slate-900 hover:text-slate-700 transition-colors"
+          className="text-lg font-bold tracking-tight text-[var(--foreground)] hover:text-[var(--accent)] transition-colors"
         >
           SyncPrep
         </Link>
-        <div className="flex items-center gap-6">
-          <Link href="/" className={navLinkClass}>
-            Home
+        
+        <div className="flex items-center gap-1">
+          <Link 
+            href="/" 
+            className={`nav-link flex items-center gap-2 ${isActive("/") ? "nav-link-active" : ""}`}
+          >
+            <Home className="w-4 h-4" />
+            <span className="hidden sm:inline">Home</span>
           </Link>
           <Link
             href="/schedule"
-            className={
-              pathname === "/schedule" ? navLinkActiveClass : navLinkClass
-            }
+            className={`nav-link flex items-center gap-2 ${isActive("/schedule") ? "nav-link-active" : ""}`}
           >
-            Schedule
+            <LayoutGrid className="w-4 h-4" />
+            <span className="hidden sm:inline">Schedule</span>
           </Link>
           <Link
             href="/calendar"
-            className={
-              pathname === "/calendar" ? navLinkActiveClass : navLinkClass
-            }
+            className={`nav-link flex items-center gap-2 ${isActive("/calendar") ? "nav-link-active" : ""}`}
           >
-            Calendar
+            <Calendar className="w-4 h-4" />
+            <span className="hidden sm:inline">Calendar</span>
           </Link>
         </div>
       </nav>

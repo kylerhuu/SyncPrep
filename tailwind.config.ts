@@ -11,42 +11,42 @@ const config: Config = {
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
-        "schedule-dark": {
-          bg: "#0f1115",
-          card: "#151821",
-          accent: "#ff7a18",
-          "accent-soft": "rgba(255, 122, 24, 0.15)",
-        },
+        accent: "var(--accent)",
+        "accent-hover": "var(--accent-hover)",
       },
       boxShadow: {
-        "orange-glow": "0 0 20px rgba(255, 122, 24, 0.4)",
-        "orange-glow-lg": "0 0 32px rgba(255, 122, 24, 0.5)",
+        "accent-glow": "0 4px 16px -4px var(--accent-glow)",
+        "accent-glow-lg": "0 8px 24px -4px var(--accent-glow)",
       },
       keyframes: {
-        "hero-glow-shift": {
-          "0%, 100%": { opacity: "0.9" },
-          "50%": { opacity: "1" },
-        },
-        "fade-up": {
+        "fade-in": {
           "0%": { opacity: "0", transform: "translateY(12px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
         },
+        "pulse-glow": {
+          "0%, 100%": { opacity: "0.6" },
+          "50%": { opacity: "1" },
+        },
       },
       animation: {
-        "hero-glow": "hero-glow-shift 8s ease-in-out infinite",
-        "fade-up": "fade-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) both",
+        "fade-in": "fade-in 0.5s ease-out both",
+        "pulse-glow": "pulse-glow 3s ease-in-out infinite",
       },
       fontFamily: {
         sans: [
+          "var(--font-inter)",
           "system-ui",
           "-apple-system",
           "BlinkMacSystemFont",
           "Segoe UI",
           "Roboto",
-          "Helvetica Neue",
-          "Arial",
           "sans-serif",
         ],
+      },
+      borderRadius: {
+        DEFAULT: "var(--radius)",
+        lg: "var(--radius-lg)",
+        xl: "var(--radius-xl)",
       },
     },
   },
